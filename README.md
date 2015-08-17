@@ -3,7 +3,10 @@ to identify resitor codes frrom pictures of resistors
 
 
 --------------------------------------------------------
+##USAGE
+DEV and DEBUG, -d
+gets filenames from script itself
 
-DEV and DEBUG, 
-change image filenames in the python script.
-will soon implement sys args
+Select Source -s <test case> <template>
+
+otherwise, terminal prompt
