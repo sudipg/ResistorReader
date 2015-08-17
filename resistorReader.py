@@ -75,17 +75,10 @@ def main():
     
     ROI = img [lowerBoundY:upperBoundY, lowerBoundX:upperBoundX]
     
-    plt.subplot(2,1,1)
+    plt.figure()
     plt.imshow(ROI, cmap = 'gray')
-    plt.subplot(2,1,2)
-    dft = discreteFourierTransform(ROI)
-    mag = abs(dft)
-            
-    plt.imshow(mag, cmap = 'gray')
     plt.show()
     
-    #plotMatches(template, ROI)
-
 def findMatches(template, img):
     """
     ---------------------------------------------------------------------------
@@ -176,15 +169,6 @@ def findBoxAroundNthPercentile(keypointsX, keypointsY, percentile, border):
         lowerBoundY, upperBoundY = findLowerAndUpperPercentile(keypointsY, lowerPercentile, upperPercentile)
         #TODO: Perform bound checking before returning
         return lowerBoundX - border, upperBoundX + border, lowerBoundY - border, upperBoundY + border    
-
-    # medianX = median(keypointsX)
-    # medianY = median(keypointsY)
-    # distanceX = computeOneDimensionalDistance(keypointsX, medianX)
-    # distanceY = computeOneDimensionalDistance(keypointsY, medianY)
-    # lowerBoundX = findNthPercentile(distanceX, 1 - percentile)
-    # upperBoundX = findNthPercentile(distanceX, percentile)
-    # lowerBoundY = findNthPercentile(distanceY, 1 - percentile)
-    # upperBoundY = findNthPercentile(distanceY, percentile)
 
 def discreteFourierTransform(img):
     """
