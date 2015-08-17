@@ -11,7 +11,7 @@ Find the region of interest in the sample image using a template from file.
 import numpy as np
 import cv2
 from matplotlib import pyplot as plt
-
+import sys
 
 """
 -------------------------------------------------------------------------------
@@ -23,8 +23,18 @@ List of important debug objects:
 
 -------------------------------------------------------------------------------
 """
-img = cv2.imread('images/test_res.png',0)
-template = cv2.imread('images/rt10.png',0)
+
+
+if len(sys.argv)>2 and sys.argv[1] == '-s':
+    imgSource = sys.argv[2]
+    templateSource = sys.argv[3]
+    print 'selected sources:\r\n'
+    print 'template is '+imgSource+' and the test image is '+templateSource;
+else:
+    imgSource = raw_input('Please enter the template picture name : ')
+    templateSource = raw_input('Please enter the template picture name : ')
+img = cv2.imread('images/'+imgSource,0)
+template = cv2.imread('images/'+templateSource,0)
 matches = []
 
 def main():
