@@ -12,6 +12,21 @@ import numpy as np
 import cv2
 from matplotlib import pyplot as plt
 
+
+"""
+-------------------------------------------------------------------------------
+Keeping images in the global frame to have better interactive debug access.
+List of important debug objects:
+- template image
+- test image
+- list of matches and keypoints
+
+-------------------------------------------------------------------------------
+"""
+img = cv2.imread('images/test_res.png',0)
+template = cv2.imread('images/rt10.png',0)
+matches = []
+
 def main():
     """
     ---------------------------------------------------------------------------
@@ -22,79 +37,36 @@ def main():
     ---------------------------------------------------------------------------
     """
 
-    template = cv2.imread('images/rs9.png',0)
-    template = cv2.blur(template, (2,2))
-    # template2 = cv2.imread('images/T.png',0)
+    imgBlurred = cv2.blur(img, (14,14))
+    templateBlurred = cv2.blur(img, (5,5))
+    # create ORB object for detecting features
+    orb = cv2.ORB_create()
+    kpT, desT = orb.detectAndCompute(templateBlurred, None)
+    kpI, desI = orb.detectAndCompute(imgBlurred, None)
 
-    img = cv2.imread('images/test_res.png',0)
+    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
+    matches = bf.match(desT, desI)
+    matches = sorted(matches, key = lambda x:x.distance)
 
-    # img_blurred = cv2.blur(img, (1,1))
-    # template = cv2.blur(template,(1,1))
-    # # create ORB object for detecting features
-    # orb = cv2.ORB_create()
-    # kpt, dest = orb.detectAndCompute(template, None)
-    # kpt2, dest2 = orb.detectAndCompute(template2, None)
-    # kpi, desi = orb.detectAndCompute(img_blurred, None)
-
-    # bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
-    # matches = bf.match(dest, desi)
-    # matches = sorted(matches, key = lambda x:x.distance)
-    # img3 = img
-    # img3 = cv2.drawMatches(template,kpt,img,kpi,matches, img3,flags=2)
-
-    # matches2 = bf.match(dest, desi)
-    # matches2 = sorted(matches2, key = lambda x:x.distance)
-    # matches = matches+matches2
-    # # now we need to extract the location of the matched features
-    # matched_keypoints = set()
-
-    # for match in matches:
-    #     matched_keypoints.add(kpi[match.trainIdx].pt)
-
-    # # set cointains points to make line of BF through
-    # print matched_keypoints
-    # matched_keypoints = list(matched_keypoints)
-    # matched_keypoints_x = [match[0] for match in matched_keypoints]
-    # matched_keypoints_y = [match[1] for match in matched_keypoints]
-
-    #line_of_BF = np.polyfit(matched_keypoints_x, matched_keypoints_y, 1)
 
     # now draw them on top of the image
-    matchedKeypointsX, matchedKeypointsY, img3 = findMatches(template, img)
+    matchedKeypointsX, matchedKeypointsY, img3 = findMatches(templateBlurred, imgBlurred)
 
-    # plt.clf()
-    # plt.imshow(matchesImg)
-    # plt.show()
+    # x_range = [sorted(matched_keypoints_x)[0]+x for x in range(int(sorted(matched_keypoints_x)[len(matched_keypoints_x)-1] - sorted(matched_keypoints_x)[0]))]
 
-    #x_range = [sorted(matched_keypoints_x)[0]+x for x in range(int(sorted(matched_keypoints_x)[len(matched_keypoints_x)-1] - sorted(matched_keypoints_x)[0]))]
-
-    #y_range = [line_of_BF[1] + line_of_BF[0]*x for x in x_range]
+    # y_range = [line_of_BF[1] + line_of_BF[0]*x for x in x_range]
 
     plt.clf()
-    plt.imshow(img, cmap = 'gray')
-    plt.plot(matchedKeypointsX, matchedKeypointsY, 'ro')
-    #plt.plot(x_range, y_range, 'ro')
     lowerBoundX, upperBoundX, lowerBoundY, upperBoundY = findBoxAroundNthPercentile(matchedKeypointsX, matchedKeypointsY, 0.50, 40)
-    #boxX = [lowerBoundX, lowerBoundX, upperBoundX, upperBoundX]
-    #boxY = [lowerBoundY, upperBoundY, lowerBoundY, upperBoundY]
-    #plt.plot(boxX, boxY, 'go')
-    plt.show()
     
     ROI = img [lowerBoundY:upperBoundY, lowerBoundX:upperBoundX]
     plt.clf()
     plt.imshow(ROI, cmap = 'gray')
     plt.show()
-
-    # band = cv2.imread('images/Band.png', 0)
-    # plotMatches(band, ROI)
+    
     bands = cv2.imread('images/Bands.png', 0)
     bands = cv2.blur(bands, (2,2))
     plotMatches(bands, ROI)
-
-    # dft = discreteFourierTransform(ROI)
-    # plt.clf()
-    # plt.imshow(dft, cmap = 'gray')
-    # plt.show()
 
 def findMatches(template, img):
     """
