@@ -25,11 +25,14 @@ List of important debug objects:
 """
 
 
-if len(sys.argv)>2 and sys.argv[1] == '-s':
+if len(sys.argv)>1 and sys.argv[1] == '-s':
     imgSource = sys.argv[2]
     templateSource = sys.argv[3]
     print 'selected sources:\r\n'
     print 'template is '+imgSource+' and the test image is '+templateSource;
+elif len(sys.argv)>1 and sys.argv[1] == '-d':
+    imgSource = 'test_res.png'
+    templateSource = 'rt10.png'
 else:
     imgSource = raw_input('Please enter the template picture name : ')
     templateSource = raw_input('Please enter the template picture name : ')
@@ -74,9 +77,7 @@ def main():
     plt.imshow(ROI, cmap = 'gray')
     plt.show()
     
-    bands = cv2.imread('images/Bands.png', 0)
-    bands = cv2.blur(bands, (2,2))
-    plotMatches(bands, ROI)
+    plotMatches(template, ROI)
 
 def findMatches(template, img):
     """
