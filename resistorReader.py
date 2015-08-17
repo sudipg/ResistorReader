@@ -12,6 +12,7 @@ import numpy as np
 import cv2
 from matplotlib import pyplot as plt
 import sys
+import math
 
 """
 -------------------------------------------------------------------------------
@@ -32,7 +33,7 @@ if len(sys.argv)>1 and sys.argv[1] == '-s':
     print 'template is '+imgSource+' and the test image is '+templateSource;
 elif len(sys.argv)>1 and sys.argv[1] == '-d':
     imgSource = 'test_res.png'
-    templateSource = 'rt10.png'
+    templateSource = 'r10t.png'
 else:
     imgSource = raw_input('Please enter the template picture name : ')
     templateSource = raw_input('Please enter the template picture name : ')
@@ -70,14 +71,20 @@ def main():
     # y_range = [line_of_BF[1] + line_of_BF[0]*x for x in x_range]
 
     plt.clf()
-    lowerBoundX, upperBoundX, lowerBoundY, upperBoundY = findBoxAroundNthPercentile(matchedKeypointsX, matchedKeypointsY, 0.50, 40)
+    lowerBoundX, upperBoundX, lowerBoundY, upperBoundY = findBoxAroundNthPercentile(matchedKeypointsX, matchedKeypointsY, 0.7, 40)
     
     ROI = img [lowerBoundY:upperBoundY, lowerBoundX:upperBoundX]
-    plt.clf()
+    
+    plt.subplot(2,1,1)
     plt.imshow(ROI, cmap = 'gray')
+    plt.subplot(2,1,2)
+    dft = discreteFourierTransform(ROI)
+    mag = abs(dft)
+            
+    plt.imshow(mag, cmap = 'gray')
     plt.show()
     
-    plotMatches(template, ROI)
+    #plotMatches(template, ROI)
 
 def findMatches(template, img):
     """
@@ -103,7 +110,7 @@ def findMatches(template, img):
     matchedKeypoints = set()
 
     img3 = img
-    img3 = cv2.drawMatches(template,kpTemplate,img,kpImg,matches[:15],img3,flags=2)
+    img3 = cv2.drawMatches(template,kpTemplate,img,kpImg,matches,img3,flags=2)
 
     for match in matches:
         matchedKeypoints.add(kpImg[match.trainIdx].pt)
