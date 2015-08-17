@@ -33,7 +33,7 @@ if len(sys.argv)>1 and sys.argv[1] == '-s':
     print 'selected sources:\r\n'
     print 'template is '+imgSource+' and the test image is '+templateSource;
 elif len(sys.argv)>1 and sys.argv[1] == '-d':
-    imgSource = 'test_res.png'
+    imgSource = 'rs9.png'
     templateSource = 'r10t.png'
 else:
     imgSource = raw_input('Please enter the template picture name : ')
@@ -72,13 +72,19 @@ def main():
     # y_range = [line_of_BF[1] + line_of_BF[0]*x for x in x_range]
 
     plt.clf()
-    lowerBoundX, upperBoundX, lowerBoundY, upperBoundY = findBoxAroundNthPercentile(matchedKeypointsX, matchedKeypointsY, 0.6, 40)
-    
-    ROI = img [lowerBoundY:upperBoundY, lowerBoundX:upperBoundX]
+    plt.subplot(311)
+    plt.imshow(img3, cmap = 'gray')
+    lowerBoundX, upperBoundX, lowerBoundY, upperBoundY = findBoxAroundNthPercentile(matchedKeypointsX, matchedKeypointsY, 0.5, 50)
+    plt.subplot(312)
+    ROI = img[lowerBoundY:upperBoundY, lowerBoundX:upperBoundX]
+    plt.imshow(ROI, cmap = 'gray')
     lowPass = ndimage.gaussian_filter(ROI,10)
     highPass = ROI - lowPass
-    highPass = ndimage.gaussian_filter(highPass,7)
-    plt.imshow(highPass, cmap = 'gray')
+    highPass = ndimage.gaussian_filter(highPass,10)
+    print highPass
+    plt.subplot(313)
+    highPassThresholded = map(lambda x: np.array([255 if y>130 else 0 for y in x]),highPass)
+    plt.imshow(highPassThresholded, cmap = 'gray')
     plt.show()
     
 def findMatches(template, img):
