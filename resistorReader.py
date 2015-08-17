@@ -13,6 +13,7 @@ import cv2
 from matplotlib import pyplot as plt
 import sys
 import math
+from scipy import ndimage
 
 """
 -------------------------------------------------------------------------------
@@ -52,7 +53,7 @@ def main():
     """
 
     imgBlurred = cv2.blur(img, (14,14))
-    templateBlurred = cv2.blur(img, (5,5))
+    templateBlurred = cv2.blur(template, (5,5))
     # create ORB object for detecting features
     orb = cv2.ORB_create()
     kpT, desT = orb.detectAndCompute(templateBlurred, None)
@@ -71,12 +72,13 @@ def main():
     # y_range = [line_of_BF[1] + line_of_BF[0]*x for x in x_range]
 
     plt.clf()
-    lowerBoundX, upperBoundX, lowerBoundY, upperBoundY = findBoxAroundNthPercentile(matchedKeypointsX, matchedKeypointsY, 0.7, 40)
+    lowerBoundX, upperBoundX, lowerBoundY, upperBoundY = findBoxAroundNthPercentile(matchedKeypointsX, matchedKeypointsY, 0.6, 40)
     
     ROI = img [lowerBoundY:upperBoundY, lowerBoundX:upperBoundX]
-    
-    plt.figure()
-    plt.imshow(ROI, cmap = 'gray')
+    lowPass = ndimage.gaussian_filter(ROI,10)
+    highPass = ROI - lowPass
+    highPass = ndimage.gaussian_filter(highPass,7)
+    plt.imshow(highPass, cmap = 'gray')
     plt.show()
     
 def findMatches(template, img):
