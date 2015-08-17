@@ -25,7 +25,6 @@ List of important debug objects:
 -------------------------------------------------------------------------------
 """
 
-
 if len(sys.argv)>1 and sys.argv[1] == '-s':
     imgSource = sys.argv[2]
     templateSource = sys.argv[3]
@@ -40,6 +39,9 @@ else:
 img = cv2.imread('images/'+imgSource,0)
 template = cv2.imread('images/'+templateSource,0)
 matches = []
+
+# RBG values
+colors = {'red': (), 'blue': (), 'green': (),}
 
 def main():
     """
