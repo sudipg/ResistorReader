@@ -67,10 +67,6 @@ def main():
     # now draw them on top of the image
     matchedKeypointsX, matchedKeypointsY, img3 = findMatches(templateBlurred, imgBlurred)
 
-    # x_range = [sorted(matched_keypoints_x)[0]+x for x in range(int(sorted(matched_keypoints_x)[len(matched_keypoints_x)-1] - sorted(matched_keypoints_x)[0]))]
-
-    # y_range = [line_of_BF[1] + line_of_BF[0]*x for x in x_range]
-
     plt.clf()
     plt.subplot(311)
     plt.imshow(img3, cmap = 'gray')
