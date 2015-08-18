@@ -13,6 +13,7 @@ import cv2
 from matplotlib import pyplot as plt
 import sys
 import math
+from scipy import ndimage
 
 """
 -------------------------------------------------------------------------------
@@ -25,13 +26,14 @@ List of important debug objects:
 -------------------------------------------------------------------------------
 """
 
+
 if len(sys.argv)>1 and sys.argv[1] == '-s':
     imgSource = sys.argv[2]
     templateSource = sys.argv[3]
     print 'selected sources:\r\n'
     print 'template is '+imgSource+' and the test image is '+templateSource;
 elif len(sys.argv)>1 and sys.argv[1] == '-d':
-    imgSource = 'test_res.png'
+    imgSource = 'rs9.png'
     templateSource = 'r10t.png'
 else:
     imgSource = raw_input('Please enter the template picture name : ')
@@ -39,9 +41,6 @@ else:
 img = cv2.imread('images/'+imgSource,0)
 template = cv2.imread('images/'+templateSource,0)
 matches = []
-
-# RBG values
-colors = {'red': (), 'blue': (), 'green': (),}
 
 def main():
     """
@@ -54,7 +53,7 @@ def main():
     """
 
     imgBlurred = cv2.blur(img, (14,14))
-    templateBlurred = cv2.blur(img, (5,5))
+    templateBlurred = cv2.blur(template, (5,5))
     # create ORB object for detecting features
     orb = cv2.ORB_create()
     kpT, desT = orb.detectAndCompute(templateBlurred, None)
@@ -68,22 +67,49 @@ def main():
     # now draw them on top of the image
     matchedKeypointsX, matchedKeypointsY, img3 = findMatches(templateBlurred, imgBlurred)
 
-    plt.clf()
-    lowerBoundX, upperBoundX, lowerBoundY, upperBoundY = findBoxAroundNthPercentile(matchedKeypointsX, matchedKeypointsY, 0.7, 40)
-    
-    ROI = img [lowerBoundY:upperBoundY, lowerBoundX:upperBoundX]
-    
-    plt.subplot(2,1,1)
-    plt.imshow(ROI, cmap = 'gray')
-    plt.subplot(2,1,2)
-    dft = discreteFourierTransform(ROI)
-    mag = abs(dft)
-            
-    plt.imshow(mag, cmap = 'gray')
-    plt.show()
-    
-    #plotMatches(template, ROI)
+    # x_range = [sorted(matched_keypoints_x)[0]+x for x in range(int(sorted(matched_keypoints_x)[len(matched_keypoints_x)-1] - sorted(matched_keypoints_x)[0]))]
 
+    # y_range = [line_of_BF[1] + line_of_BF[0]*x for x in x_range]
+
+    plt.clf()
+    plt.subplot(311)
+    plt.imshow(img3, cmap = 'gray')
+    lowerBoundX, upperBoundX, lowerBoundY, upperBoundY = findBoxAroundNthPercentile(matchedKeypointsX, matchedKeypointsY, 0.5, 50)
+    plt.subplot(312)
+    ROI = img[lowerBoundY:upperBoundY, lowerBoundX:upperBoundX]
+    plt.imshow(ROI, cmap = 'gray')
+    lowPass = ndimage.gaussian_filter(ROI,10)
+    highPass = ROI - lowPass
+    highPass = ndimage.gaussian_filter(highPass,10)
+    print highPass
+    plt.subplot(313)
+    highPassThresholded = map(lambda x: np.array([255 if y>130 else 0 for y in x]),highPass)
+    plt.imshow(highPassThresholded, cmap = 'gray')
+    a,b,x_range,y_range = getLineOfBestFit(highPassThresholded)
+    plt.plot(x_range,y_range,'ro')
+    plt.show()
+
+def getLineOfBestFit(img):
+    """
+    Analyze given image using filters and perform a best fit matching
+    return a, b such that the line of best fit for that image is y = a*x + b
+    """
+    a = b = 0
+    xPoints = []
+    yPoints = []
+    for y in xrange(len(img)):
+        for x in xrange(len(img[y])):
+            if img[y][x] > 0:
+                xPoints.append(x)
+                yPoints.append(y)
+
+    #least sqaures regression also gives the same result.
+    [a,b] = np.polyfit(xPoints,yPoints,1)
+    x_range = [sorted(xPoints)[0]+x for x in range(int(sorted(xPoints)[len(xPoints)-1] - sorted(xPoints)[0]))]
+
+    y_range = [b + a*x for x in x_range]
+    return a,b,x_range,y_range
+    
 def findMatches(template, img):
     """
     ---------------------------------------------------------------------------
@@ -174,15 +200,6 @@ def findBoxAroundNthPercentile(keypointsX, keypointsY, percentile, border):
         lowerBoundY, upperBoundY = findLowerAndUpperPercentile(keypointsY, lowerPercentile, upperPercentile)
         #TODO: Perform bound checking before returning
         return lowerBoundX - border, upperBoundX + border, lowerBoundY - border, upperBoundY + border    
-
-    # medianX = median(keypointsX)
-    # medianY = median(keypointsY)
-    # distanceX = computeOneDimensionalDistance(keypointsX, medianX)
-    # distanceY = computeOneDimensionalDistance(keypointsY, medianY)
-    # lowerBoundX = findNthPercentile(distanceX, 1 - percentile)
-    # upperBoundX = findNthPercentile(distanceX, percentile)
-    # lowerBoundY = findNthPercentile(distanceY, 1 - percentile)
-    # upperBoundY = findNthPercentile(distanceY, percentile)
 
 def discreteFourierTransform(img):
     """
