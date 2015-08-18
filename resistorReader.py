@@ -74,16 +74,23 @@ def main():
     plt.subplot(312)
     ROI = img[lowerBoundY:upperBoundY, lowerBoundX:upperBoundX]
     plt.imshow(ROI, cmap = 'gray')
-    lowPass = ndimage.gaussian_filter(ROI,10)
-    highPass = ROI - lowPass
-    highPass = ndimage.gaussian_filter(highPass,10)
-    print highPass
     plt.subplot(313)
-    highPassThresholded = map(lambda x: np.array([255 if y>130 else 0 for y in x]),highPass)
+    highPassThresholded = filterAndThreshold(ROI)
     plt.imshow(highPassThresholded, cmap = 'gray')
     a,b,x_range,y_range = getLineOfBestFit(highPassThresholded)
     plt.plot(x_range,y_range,'ro')
     plt.show()
+
+def filterAndThreshold(img):
+    """
+    Take the ROI as an image and return the binary thresholded version of the ROI
+    """
+    lowPass = ndimage.gaussian_filter(img,10)
+    highPass = img - lowPass
+    highPass = ndimage.gaussian_filter(highPass,10)
+    highPassThresholded = map(lambda x: np.array([255 if y>130 else 0 for y in x]),highPass)
+    return highPassThresholded
+
 
 def getLineOfBestFit(img):
     """
