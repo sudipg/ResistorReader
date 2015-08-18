@@ -85,7 +85,30 @@ def main():
     plt.subplot(313)
     highPassThresholded = map(lambda x: np.array([255 if y>130 else 0 for y in x]),highPass)
     plt.imshow(highPassThresholded, cmap = 'gray')
+    a,b,x_range,y_range = getLineOfBestFit(highPassThresholded)
+    plt.plot(x_range,y_range,'ro')
     plt.show()
+
+def getLineOfBestFit(img):
+    """
+    Analyze given image using filters and perform a best fit matching
+    return a, b such that the line of best fit for that image is y = a*x + b
+    """
+    a = b = 0
+    xPoints = []
+    yPoints = []
+    for y in xrange(len(img)):
+        for x in xrange(len(img[y])):
+            if img[y][x] > 0:
+                xPoints.append(x)
+                yPoints.append(y)
+
+    #least sqaures regression also gives the same result.
+    [a,b] = np.polyfit(xPoints,yPoints,1)
+    x_range = [sorted(xPoints)[0]+x for x in range(int(sorted(xPoints)[len(xPoints)-1] - sorted(xPoints)[0]))]
+
+    y_range = [b + a*x for x in x_range]
+    return a,b,x_range,y_range
     
 def findMatches(template, img):
     """
