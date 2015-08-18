@@ -67,10 +67,6 @@ def main():
     # now draw them on top of the image
     matchedKeypointsX, matchedKeypointsY, img3 = findMatches(templateBlurred, imgBlurred)
 
-    # x_range = [sorted(matched_keypoints_x)[0]+x for x in range(int(sorted(matched_keypoints_x)[len(matched_keypoints_x)-1] - sorted(matched_keypoints_x)[0]))]
-
-    # y_range = [line_of_BF[1] + line_of_BF[0]*x for x in x_range]
-
     plt.clf()
     plt.subplot(311)
     plt.imshow(img3, cmap = 'gray')
@@ -78,16 +74,23 @@ def main():
     plt.subplot(312)
     ROI = img[lowerBoundY:upperBoundY, lowerBoundX:upperBoundX]
     plt.imshow(ROI, cmap = 'gray')
-    lowPass = ndimage.gaussian_filter(ROI,10)
-    highPass = ROI - lowPass
-    highPass = ndimage.gaussian_filter(highPass,10)
-    print highPass
     plt.subplot(313)
-    highPassThresholded = map(lambda x: np.array([255 if y>130 else 0 for y in x]),highPass)
+    highPassThresholded = filterAndThreshold(ROI)
     plt.imshow(highPassThresholded, cmap = 'gray')
     a,b,x_range,y_range = getLineOfBestFit(highPassThresholded)
     plt.plot(x_range,y_range,'ro')
     plt.show()
+
+def filterAndThreshold(img):
+    """
+    Take the ROI as an image and return the binary thresholded version of the ROI
+    """
+    lowPass = ndimage.gaussian_filter(img,10)
+    highPass = img - lowPass
+    highPass = ndimage.gaussian_filter(highPass,10)
+    highPassThresholded = map(lambda x: np.array([255 if y>130 else 0 for y in x]),highPass)
+    return highPassThresholded
+
 
 def getLineOfBestFit(img):
     """
