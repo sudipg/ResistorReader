@@ -54,15 +54,6 @@ def main():
 
     imgBlurred = cv2.blur(img, (14,14))
     templateBlurred = cv2.blur(template, (5,5))
-    # create ORB object for detecting features
-    orb = cv2.ORB_create()
-    kpT, desT = orb.detectAndCompute(templateBlurred, None)
-    kpI, desI = orb.detectAndCompute(imgBlurred, None)
-
-    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
-    matches = bf.match(desT, desI)
-    matches = sorted(matches, key = lambda x:x.distance)
-
 
     # now draw them on top of the image
     matchedKeypointsX, matchedKeypointsY, img3 = findMatches(templateBlurred, imgBlurred)
@@ -79,6 +70,38 @@ def main():
     plt.imshow(highPassThresholded, cmap = 'gray')
     a,b,x_range,y_range = getLineOfBestFit(highPassThresholded)
     plt.plot(x_range,y_range,'ro')
+    plt.show()
+    findBestAngle(highPassThresholded)
+
+def findBestAngle(img):
+    """
+    Take a filtered and thresholded ROI as an image (img)
+    return a,b such that y = a*x + b is the best description of the axis of the resistor
+    """
+
+    # first find center of mass, and construct band for correlation.
+    a = b = 0
+    xPoints = []
+    yPoints = []
+    for y in xrange(len(img)):
+        for x in xrange(len(img[y])):
+            if img[y][x] > 0:
+                xPoints.append(x)
+                yPoints.append(y)
+    xCenter = sum(xPoints)/len(xPoints)
+    yCenter = sum(yPoints)/len(yPoints)
+    stripWidth = 0.1*(len(img))
+    compImg = np.array([np.array([0 for j in range(len(img[0]))]) for i in range(len(img))])
+    line = np.array([255 for j in range(len(img[0]))])
+    for i in range(int(stripWidth//2)):
+        compImg[yCenter+i] = line
+        compImg[yCenter-i] = line
+    compImg[yCenter] = line
+    plt.clf()
+    plt.imshow(compImg, cmap = 'gray')
+    plt.plot(xCenter,yCenter,'ro')
+    plt.ylim(0,len(img))
+    plt.xlim(0,len(img[0]))
     plt.show()
 
 def filterAndThreshold(img):
