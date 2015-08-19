@@ -84,6 +84,7 @@ def main():
 def filterAndThreshold(img):
     """
     Take the ROI as an image and return the binary thresholded version of the ROI
+    steps implmented: 1. Equivalent of Gaussian high pass filter, 2. thresholding to make a binary image to use later for finding the axis, etc
     """
     lowPass = ndimage.gaussian_filter(img,10)
     highPass = img - lowPass
@@ -209,6 +210,7 @@ def discreteFourierTransform(img):
     ---------------------------------------------------------------------------
     
     Given an image in the form of IMG, returns the DFT "img"
+    NOTE: the magnitude ONLY is returned and in dB scale
 
     ---------------------------------------------------------------------------
     """
