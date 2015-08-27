@@ -14,6 +14,7 @@ from matplotlib import pyplot as plt
 import sys
 import math
 from scipy import ndimage
+from transforms import *
 
 """
 -------------------------------------------------------------------------------
@@ -68,12 +69,12 @@ def main():
     plt.subplot(313)
     highPassThresholded = filterAndThreshold(ROI)
     plt.imshow(highPassThresholded, cmap = 'gray')
-    a,b,x_range,y_range = getLineOfBestFit(highPassThresholded)
+    a,b,x_range,y_range, shape = getLineOfBestFit(highPassThresholded)
     plt.plot(x_range,y_range,'ro')
     plt.show()
-    findBestAngle(highPassThresholded)
+    findBestAngle(highPassThresholded, shape)
 
-def findBestAngle(img):
+def findBestAngle(img, shape):
     """
     Take a filtered and thresholded ROI as an image (img)
     return a,b such that y = a*x + b is the best description of the axis of the resistor
@@ -91,17 +92,35 @@ def findBestAngle(img):
     xCenter = sum(xPoints)/len(xPoints)
     yCenter = sum(yPoints)/len(yPoints)
     stripWidth = 0.1*(len(img))
+
     compImg = np.array([np.array([0 for j in range(len(img[0]))]) for i in range(len(img))])
-    line = np.array([255 for j in range(len(img[0]))])
+
+    line = [0 for j in range(len(img[0])/3)] + [255 for j in range(len(img[0])/3)] + [0 for j in range(len(img[0])/3)]
+    if len(line) != len(img[0]):
+        line = line + [0 for j in range(len(img[0])-len(line))]
+    line = np.array(line)
     for i in range(int(stripWidth//2)):
         compImg[yCenter+i] = line
         compImg[yCenter-i] = line
     compImg[yCenter] = line
+    xPoints = []
+    yPoints = []
+    for y in xrange(len(compImg)):
+        for x in xrange(len(compImg[y])):
+            if compImg[y][x] > 0:
+                xPoints.append(x)
+                yPoints.append(y)
+
+    compImg = np.transpose(np.matrix([xPoints, yPoints]))
+    print compImg
+    compImg = rotate(compImg, 20)
+    compImg = paint(compImg, len(img[0]), len(img))
+
     plt.clf()
-    plt.imshow(compImg, cmap = 'gray')
+    plt.imshow(compImg,cmap='gray')
     plt.plot(xCenter,yCenter,'ro')
-    plt.ylim(0,len(img))
-    plt.xlim(0,len(img[0]))
+   #plt.ylim(0,len(img))
+   #plt.xlim(0,len(img[0]))
     plt.show()
 
 def filterAndThreshold(img):
@@ -130,12 +149,15 @@ def getLineOfBestFit(img):
                 xPoints.append(x)
                 yPoints.append(y)
 
+    
+    shape = np.transpose(np.matrix([xPoints, yPoints]))
+
     #least sqaures regression also gives the same result.
     [a,b] = np.polyfit(xPoints,yPoints,1)
     x_range = [sorted(xPoints)[0]+x for x in range(int(sorted(xPoints)[len(xPoints)-1] - sorted(xPoints)[0]))]
 
     y_range = [b + a*x for x in x_range]
-    return a,b,x_range,y_range
+    return a,b,x_range,y_range, shape
     
 def findMatches(template, img):
     """
