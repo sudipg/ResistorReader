@@ -34,7 +34,7 @@ if len(sys.argv)>1 and sys.argv[1] == '-s':
     print 'selected sources:\r\n'
     print 'template is '+imgSource+' and the test image is '+templateSource;
 elif len(sys.argv)>1 and sys.argv[1] == '-d':
-    imgSource = 'rs9.png'
+    imgSource = 'test_res.png'
     templateSource = 'r10t.png'
 else:
     imgSource = raw_input('Please enter the template picture name : ')
@@ -95,11 +95,12 @@ def findBestAngle(img, shape):
                 yPoints.append(y)
     xCenter = sum(xPoints)/len(xPoints)
     yCenter = sum(yPoints)/len(yPoints)
-    stripWidth = 0.1*(len(img))
+    original = np.transpose(np.matrix([xPoints, yPoints]))
+    stripWidth = 0.15*(len(img))
 
     compImg = np.array([np.array([0 for j in range(len(img[0]))]) for i in range(len(img))])
 
-    line = [0 for j in range(len(img[0])/3)] + [255 for j in range(len(img[0])/3)] + [0 for j in range(len(img[0])/3)]
+    line = [0 for j in range(len(img[0])/6)] + [255 for j in range(2*len(img[0])/3)] + [0 for j in range(len(img[0])/6)]
     if len(line) != len(img[0]):
         line = line + [0 for j in range(len(img[0])-len(line))]
     line = np.array(line)
@@ -121,15 +122,50 @@ def findBestAngle(img, shape):
     compImg = np.transpose(np.matrix([xPoints, yPoints]))
     # print compImg
     compImg = translate(compImg, xCenter - compImgCenterX, yCenter - compImgCenterY)
-    compImg = rotate(compImg, 90, xCenter, yCenter)
+    # compImg = rotate(compImg, 90, xCenter, yCenter)
+
+    bestAngle = 0
+    highCost = None
+    costs = dict()
+
+    for angle in [x*0.5 for x in range(180)]:
+        compImg = rotate(compImg, angle, xCenter, yCenter)
+        newCost = costNaive(compImg, original, width, height)
+        compImg = rotate(compImg, -angle, xCenter, yCenter)
+        costs[angle] = newCost
+        if highCost == None or highCost < newCost:
+            highCost = newCost
+            bestAngle = angle 
+
+    print costs
+
+    compImg = rotate(compImg, bestAngle, xCenter, yCenter)
+
     compImg = paint(compImg, len(img[0]), len(img))
 
     plt.clf()
+    plt.figure()
+    plt.subplot(211)
     plt.imshow(compImg,cmap='gray')
     plt.plot(xCenter,yCenter,'ro')
     plt.ylim(0,len(img))
     plt.xlim(0,len(img[0]))
+    plt.subplot(212)
+    plt.imshow(img,cmap='gray')
+    plt.ylim(0,len(img))
+    plt.xlim(0,len(img[0]))
     plt.show()
+
+def costNaive(img, compImg, w, h):
+    """
+    takes 2 matrices 
+    returns integer denoting the correlation
+    """
+    im1 = paint(img, w, h)
+    im2 = paint(compImg, w, h)
+    conv = np.multiply(im1,im2)
+    cost = np.sum(conv)
+    return cost
 
 def filterAndThreshold(img):
     """
