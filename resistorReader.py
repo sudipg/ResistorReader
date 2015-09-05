@@ -84,6 +84,10 @@ def findBestAngle(img, shape):
     a = b = 0
     xPoints = []
     yPoints = []
+
+    height = len(img)
+    width = len(img[0])
+
     for y in xrange(len(img)):
         for x in xrange(len(img[y])):
             if img[y][x] > 0:
@@ -111,16 +115,20 @@ def findBestAngle(img, shape):
                 xPoints.append(x)
                 yPoints.append(y)
 
+    compImgCenterX = sum(xPoints)/len(xPoints)
+    compImgCenterY = sum(yPoints)/len(yPoints) 
+
     compImg = np.transpose(np.matrix([xPoints, yPoints]))
-    print compImg
-    compImg = rotate(compImg, 20)
+    # print compImg
+    compImg = translate(compImg, xCenter - compImgCenterX, yCenter - compImgCenterY)
+    compImg = rotate(compImg, 90, xCenter, yCenter)
     compImg = paint(compImg, len(img[0]), len(img))
 
     plt.clf()
     plt.imshow(compImg,cmap='gray')
     plt.plot(xCenter,yCenter,'ro')
-   #plt.ylim(0,len(img))
-   #plt.xlim(0,len(img[0]))
+    plt.ylim(0,len(img))
+    plt.xlim(0,len(img[0]))
     plt.show()
 
 def filterAndThreshold(img):

@@ -13,10 +13,11 @@ def translate(img, dx, dy):
 	img = np.matrix(img) + np.transpose([dx, dy])
 	return img
 
-def rotate(img, angle):
+def rotate(img, angle, centerX, centerY):
 	angle = angle*pi/180.0
+	img = translate(img, -centerX, -centerY)
 	img = img*np.matrix([[math.cos(angle), math.sin(angle)],[-math.sin(angle), math.cos(angle)]])
-	return img
+	return translate(img, centerX, centerY)
 
 def paint(mat, width, height):
 	img = np.zeros((height, width))
