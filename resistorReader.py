@@ -15,6 +15,7 @@ import sys
 import math
 from scipy import ndimage
 from transforms import *
+from colors import *
 
 """
 -------------------------------------------------------------------------------
@@ -34,7 +35,7 @@ if len(sys.argv)>1 and sys.argv[1] == '-s':
     print 'selected sources:\r\n'
     print 'template is '+imgSource+' and the test image is '+templateSource;
 elif len(sys.argv)>1 and sys.argv[1] == '-d':
-    imgSource = 'test_res.png'
+    imgSource = 'rs9.png'
     templateSource = 'r10t.png'
 else:
     imgSource = raw_input('Please enter the template picture name : ')
@@ -42,6 +43,8 @@ else:
 img = cv2.imread('images/'+imgSource,0)
 template = cv2.imread('images/'+templateSource,0)
 matches = []
+
+ROI_hsv = None
 
 def main():
     """
@@ -52,19 +55,23 @@ def main():
 
     ---------------------------------------------------------------------------
     """
+    global ROI_hsv
 
     imgBlurred = cv2.blur(img, (14,14))
     templateBlurred = cv2.blur(template, (5,5))
 
     # now draw them on top of the image
     matchedKeypointsX, matchedKeypointsY, img3 = findMatches(templateBlurred, imgBlurred)
-
+    bgr_image = cv2.imread('images/'+imgSource)
+    rgb_image = cv2.cvtColor(bgr_image,cv2.COLOR_BGR2RGB)
+    hsv_image = cv2.cvtColor(bgr_image,cv2.COLOR_BGR2HSV)
     plt.clf()
     plt.subplot(311)
     plt.imshow(img3, cmap = 'gray')
     lowerBoundX, upperBoundX, lowerBoundY, upperBoundY = findBoxAroundNthPercentile(matchedKeypointsX, matchedKeypointsY, 0.5, 50)
     plt.subplot(312)
     ROI = img[lowerBoundY:upperBoundY, lowerBoundX:upperBoundX]
+    ROI_bgr = rgb_image[lowerBoundY:upperBoundY, lowerBoundX:upperBoundX]
     plt.imshow(ROI, cmap = 'gray')
     plt.subplot(313)
     highPassThresholded = filterAndThreshold(ROI)
@@ -73,6 +80,25 @@ def main():
     plt.plot(x_range,y_range,'ro')
     plt.show()
     findBestAngle(highPassThresholded, shape)
+
+    ######
+    # colors!
+    ######
+    plt.clf()
+    ROI_hsv = cv2.cvtColor(ROI_bgr,cv2.COLOR_BGR2HSV)
+    H,S,V = cv2.split(ROI_hsv)
+    plt.subplot(411)
+    plt.imshow(ROI_bgr)
+    plt.subplot(412)
+    plt.title("Hue")
+    plt.imshow(H, cmap = 'gray')
+    plt.subplot(413)
+    plt.title("Saturation")
+    plt.imshow(S, cmap = 'gray')
+    plt.subplot(414)
+    plt.title("Value")
+    plt.imshow(V, cmap = 'gray')
+    plt.show()
 
 def findBestAngle(img, shape):
     """
@@ -128,7 +154,7 @@ def findBestAngle(img, shape):
     highCost = None
     costs = dict()
 
-    for angle in [x*0.5 for x in range(180)]:
+    for angle in [x*0.5 for x in range(190)]:
         compImg = rotate(compImg, angle, xCenter, yCenter)
         newCost = costNaive(compImg, original, width, height)
         compImg = rotate(compImg, -angle, xCenter, yCenter)
@@ -144,7 +170,6 @@ def findBestAngle(img, shape):
     compImg = paint(compImg, len(img[0]), len(img))
 
     plt.clf()
-    plt.figure()
     plt.subplot(211)
     plt.imshow(compImg,cmap='gray')
     plt.plot(xCenter,yCenter,'ro')
@@ -155,6 +180,7 @@ def findBestAngle(img, shape):
     plt.ylim(0,len(img))
     plt.xlim(0,len(img[0]))
     plt.show()
+    return bestAngle, xCenter, yCenter
 
 def costNaive(img, compImg, w, h):
     """
@@ -307,6 +333,7 @@ def discreteFourierTransform(img):
     dft = np.fft.fftshift(dft)
     dft  = 20 * np.log(np.abs(dft))
     return dft
+
 
 
 if __name__ == '__main__':

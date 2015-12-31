@@ -62,9 +62,6 @@ class App:
 			self.color_selectors[color] = Button(button_frame, text=color, command=self.color_selectors_fn[color])
 			self.color_selectors[color].grid(row=1, column=self.colors.index(color))
 
-	def hello(self):
-		print "hello world!"
-
 	def set_color(self, color):
 		clr = copy.deepcopy(color)
 		
