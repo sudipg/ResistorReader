@@ -4,6 +4,7 @@ Examine the data, see if separable
 """
 
 from Tkinter import *
+import tkFileDialog
 import numpy as np
 import cv2
 from matplotlib import pyplot as plt
@@ -20,6 +21,15 @@ import copy
 class App:
 	
 	def __init__(self, master):
+
+		self.root = master
+		root.protocol('WM_DELETE_WINDOW', self.close)
+
+		menubar = Menu(master)
+		menubar.add_command(label="open", command=self.openFile)
+		menubar.add_command(label="save", command=self.saveFile)
+		master.config(menu=menubar)
+
 		frame = Frame(master)
 		frame.grid(row=0,column=0)
 
@@ -28,29 +38,24 @@ class App:
 		self.button = Button(button_frame, text="Quit", command=frame.quit)
 		self.button.grid(row=2,column=0)
 
+		self.fileName = ""
+
 		f = Image.open("rs9.png")
 		photo = ImageTk.PhotoImage(f)
-		img = cv2.imread('rs9.png', 1)
+		imgRGB = cv2.cvtColor(cv2.imread('rs9.png'), cv2.COLOR_BGR2RGB)
 
 		self.colors = ["red", "brown", "blue", "black","brown","yellow","violet","green"]
 
 
-		self.canvas = Canvas(frame, width=len(img[0]), height=len(img), cursor="cross")		
-		self.canvas.create_image(0,0,image=photo, anchor='nw', state=NORMAL)
+		self.canvas = Canvas(frame, width=900, height=900, cursor="cross")		
+		self.imgDisplayed = self.canvas.create_image(0,0,image=photo, anchor='nw', state=NORMAL)
 		self.canvas.image = photo 
 		self.canvas.grid(row=0,column=0)
 
 		self.current_color = ""
 
-		def get_sample(event):
-			canvas = event.widget
-			x = canvas.canvasx(event.x)
-			y = canvas.canvasy(event.y)
-			x,y = int(x),int(y)
-			self.canvas.create_oval(max(0,x-1),max(0,y-1),min(canvas.winfo_width(),x+1),min(canvas.winfo_height(),y+1), fill="red")
-			print str(x) + " " + str(y) + " " + self.current_color
 
-		self.canvas.bind("<Button 1>", get_sample)
+		self.canvas.bind("<Button 1>", self.get_sample)
 
 		
 		self.color_selectors = dict()
@@ -71,6 +76,31 @@ class App:
 
 		return setter
 
+	def get_sample(self,event):
+		canvas = event.widget
+		x = canvas.canvasx(event.x)
+		y = canvas.canvasy(event.y)
+		x,y = int(x),int(y)
+		canvas.create_oval(max(0,x-1),max(0,y-1),min(canvas.winfo_width(),x+1),min(canvas.winfo_height(),y+1), fill="red")
+		print str(x) + " " + str(y) + " " + self.current_color
+
+	def openFile(self):
+		self.fileName = tkFileDialog.askopenfilename(parent=self.root)
+		print self.fileName
+		self.canvas.delete(self.imgDisplayed)
+		f = Image.open(self.fileName)
+		photo = ImageTk.PhotoImage(f)
+		self.imgDisplayed = self.canvas.create_image(0,0,image=photo, anchor='nw', state=NORMAL)
+		self.canvas.image = photo 
+		self.canvas.grid(row=0,column=0)
+		imgRGB = cv2.cvtColor(cv2.imread('rs9.png'), cv2.COLOR_BGR2RGB)
+		
+
+	def close(self):
+		self.root.destroy()
+
+	def saveFile(self):
+		targetFileName = self.fileName.split(".")[0]+".data"
 
 
 
@@ -79,6 +109,5 @@ root = Tk()
 
 app = App(root)
 root.mainloop()
-root.destroy()
 
 
