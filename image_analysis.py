@@ -8,7 +8,7 @@ import sys
 import math
 from scipy import ndimage
 from transforms import *
-from ../colors import *
+from colors import *
 import matplotlib.image as mpimg
 import pygame
 
