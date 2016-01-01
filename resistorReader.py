@@ -59,6 +59,14 @@ def main():
 
     imgBlurred = cv2.blur(img, (14,14))
     templateBlurred = cv2.blur(template, (5,5))
+    # create ORB object for detecting features
+    orb = cv2.ORB_create()
+    kpT, desT = orb.detectAndCompute(templateBlurred, None)
+    kpI, desI = orb.detectAndCompute(imgBlurred, None)
+
+    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
+    matches = bf.match(desT, desI)
+    matches = sorted(matches, key = lambda x:x.distance)
 
     # now draw them on top of the image
     matchedKeypointsX, matchedKeypointsY, img3 = findMatches(templateBlurred, imgBlurred)
@@ -84,21 +92,21 @@ def main():
     ######
     # colors!
     ######
-    plt.clf()
-    ROI_hsv = cv2.cvtColor(ROI_bgr,cv2.COLOR_BGR2HSV)
-    H,S,V = cv2.split(ROI_hsv)
-    plt.subplot(411)
-    plt.imshow(ROI_bgr)
-    plt.subplot(412)
-    plt.title("Hue")
-    plt.imshow(H, cmap = 'gray')
-    plt.subplot(413)
-    plt.title("Saturation")
-    plt.imshow(S, cmap = 'gray')
-    plt.subplot(414)
-    plt.title("Value")
-    plt.imshow(V, cmap = 'gray')
-    plt.show()
+    #plt.clf()
+    #ROI_hsv = cv2.cvtColor(ROI_bgr,cv2.COLOR_BGR2HSV)
+    #H,S,V = cv2.split(ROI_hsv)
+    #plt.subplot(411)
+    #plt.imshow(ROI_bgr)
+    #plt.subplot(412)
+    #plt.title("Hue")
+    #plt.imshow(H, cmap = 'gray')
+    #plt.subplot(413)
+    #plt.title("Saturation")
+    #plt.imshow(S, cmap = 'gray')
+    #plt.subplot(414)
+    #plt.title("Value")
+    #plt.imshow(V, cmap = 'gray')
+    #plt.show()
 
 def findBestAngle(img, shape):
     """
@@ -221,6 +229,44 @@ def getLineOfBestFit(img):
 
     
     shape = np.transpose(np.matrix([xPoints, yPoints]))
+    plt.clf()
+    plt.subplot(311)
+    plt.imshow(img3, cmap = 'gray')
+    lowerBoundX, upperBoundX, lowerBoundY, upperBoundY = findBoxAroundNthPercentile(matchedKeypointsX, matchedKeypointsY, 0.5, 50)
+    plt.subplot(312)
+    ROI = img[lowerBoundY:upperBoundY, lowerBoundX:upperBoundX]
+    plt.imshow(ROI, cmap = 'gray')
+    plt.subplot(313)
+    highPassThresholded = filterAndThreshold(ROI)
+    plt.imshow(highPassThresholded, cmap = 'gray')
+    a,b,x_range,y_range = getLineOfBestFit(highPassThresholded)
+    plt.plot(x_range,y_range,'ro')
+    plt.show()
+
+def filterAndThreshold(img):
+    """
+    Take the ROI as an image and return the binary thresholded version of the ROI
+    """
+    lowPass = ndimage.gaussian_filter(img,10)
+    highPass = img - lowPass
+    highPass = ndimage.gaussian_filter(highPass,10)
+    highPassThresholded = map(lambda x: np.array([255 if y>130 else 0 for y in x]),highPass)
+    return highPassThresholded
+
+
+def getLineOfBestFit(img):
+    """
+    Analyze given image using filters and perform a best fit matching
+    return a, b such that the line of best fit for that image is y = a*x + b
+    """
+    a = b = 0
+    xPoints = []
+    yPoints = []
+    for y in xrange(len(img)):
+        for x in xrange(len(img[y])):
+            if img[y][x] > 0:
+                xPoints.append(x)
+                yPoints.append(y)
 
     #least sqaures regression also gives the same result.
     [a,b] = np.polyfit(xPoints,yPoints,1)
