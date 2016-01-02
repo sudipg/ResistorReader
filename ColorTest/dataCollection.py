@@ -53,7 +53,6 @@ class App:
 		self.cframe.grid(row=0,column=0)
 		self.hbar=Scrollbar(self.cframe,orient=HORIZONTAL)
 		self.hbar.grid(row=1,column=0, sticky=W+E)
-		self.hbar.config(command=self.canvas.xview)
 		self.vbar=Scrollbar(self.cframe,orient=VERTICAL)
 		self.vbar.grid(row=0,column=1, sticky=N+S)
 		self.vbar.config(command=self.canvas.yview)
@@ -63,7 +62,7 @@ class App:
 
 
 		self.canvas.bind("<Button 1>", self.get_sample)
-		scrollregion=(0, 0, 1200, 800)
+		
 
 		
 		self.color_selectors = dict()
@@ -118,13 +117,9 @@ class App:
 		self.imgDisplayed = self.canvas.create_image(0,0,image=photo, anchor='nw', state=NORMAL)
 		self.canvas.image = photo 
 		self.canvas.grid(row=0,column=0)
-		self.hbar=Scrollbar(self.cframe,orient=HORIZONTAL)
-		self.hbar.grid(row=1,column=0, sticky=W+E)
 		self.hbar.config(command=self.canvas.xview)
-		self.vbar=Scrollbar(self.cframe,orient=VERTICAL)
-		self.vbar.grid(row=0,column=1, sticky=N+S)
 		self.vbar.config(command=self.canvas.yview)
-		self.canvas.config(xscrollcommand=self.hbar.set, yscrollcommand=self.vbar.set)
+		self.canvas.config(xscrollcommand=self.hbar.set, yscrollcommand=self.vbar.set,scrollregion=(0, 0, photo.width(), photo.height()))
 
 	def close(self):
 		self.root.destroy()
