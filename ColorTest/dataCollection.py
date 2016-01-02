@@ -35,24 +35,35 @@ class App:
 		frame.grid(row=0,column=0)
 
 		button_frame = Frame(frame)
-		button_frame.grid(row=1,column=0)
+		button_frame.grid(row=2,column=0)
 		self.button = Button(button_frame, text="Quit", command=frame.quit)
-		self.button.grid(row=2,column=0)
+		self.button.grid(row=3,column=0)
 
 		self.fileName = ""
 		self.imgDisplayed = None
-		self.colors = ["red", "brown", "blue", "black","brown","yellow","violet","green"]
+		self.imgHeight = 0
+		self.imgWeight = 0
+		self.colors = ["red", "brown", "blue", "black","brown","yellow","violet","green","grey","white","gold","silver","orange","violet"]
 
-
-		self.canvas = Canvas(frame, width=900, height=900, cursor="cross")		
+		self.cframe = Frame(frame)
+		self.canvas = Canvas(self.cframe,width=1200,height=800, cursor="cross")		
 		#self.imgDisplayed = self.canvas.create_image(0,0,image=photo, anchor='nw', state=NORMAL)
 		#self.canvas.image = photo 
 		self.canvas.grid(row=0,column=0)
-
+		self.cframe.grid(row=0,column=0)
+		self.hbar=Scrollbar(self.cframe,orient=HORIZONTAL)
+		self.hbar.grid(row=1,column=0, sticky=W+E)
+		self.hbar.config(command=self.canvas.xview)
+		self.vbar=Scrollbar(self.cframe,orient=VERTICAL)
+		self.vbar.grid(row=0,column=1, sticky=N+S)
+		self.vbar.config(command=self.canvas.yview)
+		self.canvas.config(width=1200,height=800)
+		self.canvas.config(xscrollcommand=self.hbar.set, yscrollcommand=self.vbar.set)
 		self.current_color = ""
 
 
 		self.canvas.bind("<Button 1>", self.get_sample)
+		scrollregion=(0, 0, 1200, 800)
 
 		
 		self.color_selectors = dict()
@@ -68,7 +79,7 @@ class App:
 		"""
 		Data Structures for labels
 		"""
-		self.labels = dict() #disctionary color: list of labeled points
+		self.labels = dict() #dictionary color: list of labeled points
 
 
 
@@ -82,12 +93,15 @@ class App:
 		return setter
 
 	def get_sample(self,event):
+		if not self.current_color in self.colors:
+			return
 		canvas = event.widget
 		x = canvas.canvasx(event.x)
 		y = canvas.canvasy(event.y)
 		x,y = int(x),int(y)
-		canvas.create_oval(max(0,x-1),max(0,y-1),min(canvas.winfo_width(),x+1),min(canvas.winfo_height(),y+1), fill="red")
+		canvas.create_oval(x-1,y-1,x+1,y+1, fill=self.current_color)
 		print str(x) + " " + str(y) + " " + self.current_color
+		
 		if not self.current_color in self.labels.keys():
 			self.labels[self.current_color] = [(x, y)]
 		else:
@@ -97,14 +111,20 @@ class App:
 		self.fileName = tkFileDialog.askopenfilename(parent=self.root)
 		print self.fileName
 		self.canvas.delete(self.imgDisplayed)
-		f = Image.open('rs9.png')
+		self.labels = dict() # wipe records
+		f = Image.open(self.fileName)
 		f = to_pil(cca.stretch(from_pil(f)))
 		photo = ImageTk.PhotoImage(f)
 		self.imgDisplayed = self.canvas.create_image(0,0,image=photo, anchor='nw', state=NORMAL)
 		self.canvas.image = photo 
 		self.canvas.grid(row=0,column=0)
-		imgRGB = cv2.cvtColor(cv2.imread('rs9.png'), cv2.COLOR_BGR2RGB)
-
+		self.hbar=Scrollbar(self.cframe,orient=HORIZONTAL)
+		self.hbar.grid(row=1,column=0, sticky=W+E)
+		self.hbar.config(command=self.canvas.xview)
+		self.vbar=Scrollbar(self.cframe,orient=VERTICAL)
+		self.vbar.grid(row=0,column=1, sticky=N+S)
+		self.vbar.config(command=self.canvas.yview)
+		self.canvas.config(xscrollcommand=self.hbar.set, yscrollcommand=self.vbar.set)
 
 	def close(self):
 		self.root.destroy()
