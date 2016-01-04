@@ -77,7 +77,7 @@ class App:
 		
 		def setter():
 			self.current_color = clr
-			print self.current_color
+			print(self.current_color)
 
 		return setter
 
@@ -87,7 +87,7 @@ class App:
 		y = canvas.canvasy(event.y)
 		x,y = int(x),int(y)
 		canvas.create_oval(max(0,x-1),max(0,y-1),min(canvas.winfo_width(),x+1),min(canvas.winfo_height(),y+1), fill="red")
-		print str(x) + " " + str(y) + " " + self.current_color
+		print(str(x) + " " + str(y) + " " + self.current_color)
 		if not self.current_color in self.labels.keys():
 			self.labels[self.current_color] = [(x, y)]
 		else:
@@ -95,7 +95,7 @@ class App:
 
 	def openFile(self):
 		self.fileName = tkFileDialog.askopenfilename(parent=self.root)
-		print self.fileName
+		print(self.fileName)
 		self.canvas.delete(self.imgDisplayed)
 		f = Image.open('rs9.png')
 		f = to_pil(cca.stretch(from_pil(f)))
@@ -115,7 +115,7 @@ class App:
 		for color in self.labels.keys():
 			for (x,y) in self.labels[color]:
 				f.write(str(x)+","+str(y)+","+color+"\n")
-		print "data (coords and labels) saved at "+targetFileName
+		print("data (coords and labels) saved at "+targetFileName)
 		f.close()
 
 
