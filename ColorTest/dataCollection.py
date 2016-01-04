@@ -34,7 +34,7 @@ class App:
 		frame = Frame(master)
 		frame.grid(row=0,column=0)
 
-		button_frame = Frame(frame)
+		ibutton_frame = Frame(frame)
 		button_frame.grid(row=2,column=0)
 		self.button = Button(button_frame, text="Quit", command=frame.quit)
 		self.button.grid(row=3,column=0)
@@ -47,8 +47,6 @@ class App:
 
 		self.cframe = Frame(frame)
 		self.canvas = Canvas(self.cframe,width=1200,height=800, cursor="cross")		
-		#self.imgDisplayed = self.canvas.create_image(0,0,image=photo, anchor='nw', state=NORMAL)
-		#self.canvas.image = photo 
 		self.canvas.grid(row=0,column=0)
 		self.cframe.grid(row=0,column=0)
 		self.hbar=Scrollbar(self.cframe,orient=HORIZONTAL)
@@ -58,16 +56,16 @@ class App:
 		self.vbar.config(command=self.canvas.yview)
 		self.canvas.config(width=1200,height=800)
 		self.canvas.config(xscrollcommand=self.hbar.set, yscrollcommand=self.vbar.set)
+
+
 		self.current_color = ""
 
 
 		self.canvas.bind("<Button 1>", self.get_sample)
-		
 
 		
 		self.color_selectors = dict()
 		self.color_selectors_fn = dict()
-		# pdb.set_trace()
 
 		for color in self.colors:
 			self.color_selectors_fn[color] = self.set_color(color)
@@ -78,9 +76,7 @@ class App:
 		"""
 		Data Structures for labels
 		"""
-		self.labels = dict() #dictionary color: list of labeled points
-
-
+		self.labels = dict() #disctionary color: list of labeled points
 
 	def set_color(self, color):
 		clr = copy.deepcopy(color)
@@ -100,7 +96,6 @@ class App:
 		x,y = int(x),int(y)
 		canvas.create_oval(x-1,y-1,x+1,y+1, fill=self.current_color)
 		print str(x) + " " + str(y) + " " + self.current_color
-		
 		if not self.current_color in self.labels.keys():
 			self.labels[self.current_color] = [(x, y)]
 		else:
@@ -112,14 +107,13 @@ class App:
 		self.canvas.delete(self.imgDisplayed)
 		self.labels = dict() # wipe records
 		f = Image.open(self.fileName)
-		f = to_pil(cca.stretch(from_pil(f)))
+		#f = to_pil(cca.stretch(from_pil(f))) # optional color correction algorithms
 		photo = ImageTk.PhotoImage(f)
 		self.imgDisplayed = self.canvas.create_image(0,0,image=photo, anchor='nw', state=NORMAL)
 		self.canvas.image = photo 
 		self.canvas.grid(row=0,column=0)
-		self.hbar.config(command=self.canvas.xview)
-		self.vbar.config(command=self.canvas.yview)
-		self.canvas.config(xscrollcommand=self.hbar.set, yscrollcommand=self.vbar.set,scrollregion=(0, 0, photo.width(), photo.height()))
+		imgRGB = cv2.cvtColor(cv2.imread('rs9.png'), cv2.COLOR_BGR2RGB)
+
 
 	def close(self):
 		self.root.destroy()
@@ -130,7 +124,7 @@ class App:
 		for color in self.labels.keys():
 			for (x,y) in self.labels[color]:
 				f.write(str(x)+","+str(y)+","+color+"\n")
-		print "data (coords and labels) saved at "+targetFileName
+		print("data (coords and labels) saved at "+targetFileName)
 		f.close()
 
 
