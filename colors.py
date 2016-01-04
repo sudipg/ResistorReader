@@ -86,17 +86,3 @@ def normalizeHue(arr, currMax, futureMax):
             arr[i][j] = (arr[i][j] / currMax) * futureMax
     return arr
 
-"""
-TODO: make an estimate for all expected colors in LAB scale
-"""
-
-
-
-
-def labColorMatch():
-    """
-    Given LAB coords, match to nearest color
-
-    Apparently LAB is linear and good for 3rd dist 
-    """
-    
