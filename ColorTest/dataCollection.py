@@ -34,7 +34,7 @@ class App:
 		frame = Frame(master)
 		frame.grid(row=0,column=0)
 
-		ibutton_frame = Frame(frame)
+		button_frame = Frame(frame)
 		button_frame.grid(row=2,column=0)
 		self.button = Button(button_frame, text="Quit", command=frame.quit)
 		self.button.grid(row=3,column=0)
@@ -46,7 +46,7 @@ class App:
 		self.colors = ["red", "brown", "blue", "black","brown","yellow","violet","green","grey","white","gold","silver","orange","violet"]
 
 		self.cframe = Frame(frame)
-		self.canvas = Canvas(self.cframe,width=1200,height=800, cursor="cross")		
+		self.canvas = Canvas(self.cframe,width=1200,height=800)		
 		self.canvas.grid(row=0,column=0)
 		self.cframe.grid(row=0,column=0)
 		self.hbar=Scrollbar(self.cframe,orient=HORIZONTAL)
@@ -54,9 +54,10 @@ class App:
 		self.vbar=Scrollbar(self.cframe,orient=VERTICAL)
 		self.vbar.grid(row=0,column=1, sticky=N+S)
 		self.vbar.config(command=self.canvas.yview)
+		self.hbar.config(command=self.canvas.xview)
 		self.canvas.config(width=1200,height=800)
 		self.canvas.config(xscrollcommand=self.hbar.set, yscrollcommand=self.vbar.set)
-
+		self.canvas.config(xscrollcommand=self.hbar.set, yscrollcommand=self.vbar.set)
 
 		self.current_color = ""
 
@@ -110,10 +111,9 @@ class App:
 		#f = to_pil(cca.stretch(from_pil(f))) # optional color correction algorithms
 		photo = ImageTk.PhotoImage(f)
 		self.imgDisplayed = self.canvas.create_image(0,0,image=photo, anchor='nw', state=NORMAL)
+		self.canvas.config(xscrollcommand=self.hbar.set, yscrollcommand=self.vbar.set,scrollregion=(0, 0, photo.width(), photo.height()))
 		self.canvas.image = photo 
 		self.canvas.grid(row=0,column=0)
-		imgRGB = cv2.cvtColor(cv2.imread('rs9.png'), cv2.COLOR_BGR2RGB)
-
 
 	def close(self):
 		self.root.destroy()

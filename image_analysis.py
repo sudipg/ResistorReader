@@ -3,20 +3,28 @@ testing
 """
 import pdb
 import numpy as np
-import scipy as sp
 import cv2
 from matplotlib import pyplot as plt
 import sys
 import math
-from scipy import ndimage
+from scipy import ndimage, misc
+import scipy as sp
 from transforms import *
 from colors import *
 import matplotlib.image as mpimg
 from mpl_toolkits.mplot3d import Axes3D
-import pygame
 import glob
 import colorcorrect.algorithm as cca
 from skimage import color
+from sklearn import svm
+from Tkinter import *
+import tkFileDialog
+from PIL import Image, ImageTk
+import copy
+from sklearn.ensemble import RandomForestClassifier
+from sklearn import tree, neighbors
+from sklearn.externals.six import StringIO 
+import pydot
 
 def ColorMatch(RGB):
 	return RGBColorMatch(RGB[0],RGB[1],RGB[2])
@@ -27,7 +35,7 @@ def draw(img):
 	plt.show()
 	return fig
 
-sources = glob.glob("ColorLabels/*.data")
+sources = glob.glob("images/TrainingSet/*.data")
 print "analyzing files : "+ str(sources) 
 imgs = []
 
@@ -43,9 +51,9 @@ for source in sources:
 		filename+='.JPG'
 	print filename
 
-	img = sp.ndimage.imread('images/'+filename)
-	#img = cca.luminance_weighted_gray_world(img)
-	img_lab = color.rgb2lab(img)
+	img = sp.ndimage.imread('images/TrainingSet/'+filename)
+	# img = cca.luminance_weighted_gray_world(img)
+	img_lab = color.rgb2lab(copy.deepcopy(img))
 	plt.figure()
 	plt.imshow(img)
 	plt.show()
@@ -54,7 +62,6 @@ for source in sources:
 	ax2 = fig.add_subplot(122, projection='3d',title="LAB")
 	f = open(source,'r')
 	lines = f.readlines()
-	print lines[0:4]
 	for line in lines:
 		line = line.replace('\n','')
 		#pdb.set_trace()
@@ -83,16 +90,34 @@ for source in sources:
 	ax2.set_ylabel('B')
 	ax2.set_zlabel('L')
 	plt.show()
-
+plt.close()
 print 'displaying cumulative colors'
 fig=plt.figure()
 ax = fig.add_subplot(121, projection='3d')
 ax2 = fig.add_subplot(122, projection='3d')
+rgb_data = []
+rgb_labels = []
+lab_data = []
+lab_labels = []
 for c in cumulative.keys():
 	for (r,b,g) in cumulative[c]:
 		ax.scatter(xs=r,ys=g,zs=b,c=c,marker='x')
+		rgb_data.append([r,g,b,c])
 	for (a,b,l) in cumulative2[c]:
 		ax2.scatter(xs=a,ys=b,zs=l,c=c,marker='x')
+		lab_data.append([a,b,l,c])
+rgb_data_temp = np.random.permutation(rgb_data)
+lab_data_temp = np.random.permutation(lab_data)
+rgb_data = []
+lab_data = []
+lab_labels = []
+lab_labels = []
+for [r,g,b,c] in rgb_data_temp:
+	rgb_data.append([r,g,b])
+	rgb_labels.append(c)
+for [a,b,l,c] in lab_data_temp:
+	lab_data.append([a,b,l])
+	lab_labels.append(c)
 ax.set_xlabel('RED')
 ax.set_ylabel('GREEN')
 ax.set_zlabel('BLUE')
@@ -100,3 +125,104 @@ ax2.set_xlabel('A')
 ax2.set_ylabel('B')
 ax2.set_zlabel('L')
 plt.show()
+plt.close()
+
+
+# clf = tree.DecisionTreeClassifier(max_depth=None,min_samples_split=1)
+# clf.fit(rgb_data, rgb_labels)
+# print rgb_data
+# print rgb_labels
+# print clf
+# dot_data = StringIO() 
+# tree.export_graphviz(clf, out_file=dot_data) 
+# graph = pydot.graph_from_dot_data(dot_data.getvalue()) 
+# graph.write_pdf("colors.pdf") 
+
+
+clf = RandomForestClassifier(n_estimators=10)
+clf.fit(lab_data, lab_labels)
+print rgb_data
+print rgb_labels
+print clf
+
+class App:
+	
+	def __init__(self, master):
+
+		self.root = master
+		root.protocol('WM_DELETE_WINDOW', self.close)
+
+		menubar = Menu(master)
+		menubar.add_command(label="open", command=self.openFile)
+		master.config(menu=menubar)
+
+		frame = Frame(master)
+		frame.grid(row=0,column=0)
+
+		button_frame = Frame(frame)
+		button_frame.grid(row=2,column=0)
+		self.button = Button(button_frame, text="Quit", command=frame.quit)
+		self.button.grid(row=3,column=0)
+
+		self.fileName = ""
+		self.imgDisplayed = None
+		self.imgHeight = 0
+		self.imgWeight = 0
+		self.rgbImg = None
+		self.labImg = None
+		
+
+		self.cframe = Frame(frame)
+		self.canvas = Canvas(self.cframe,width=1200,height=800)		
+		self.canvas.grid(row=0,column=0)
+		self.cframe.grid(row=0,column=0)
+		self.hbar=Scrollbar(self.cframe,orient=HORIZONTAL)
+		self.hbar.grid(row=1,column=0, sticky=W+E)
+		self.vbar=Scrollbar(self.cframe,orient=VERTICAL)
+		self.vbar.grid(row=0,column=1, sticky=N+S)
+		self.vbar.config(command=self.canvas.yview)
+		self.hbar.config(command=self.canvas.xview)
+		self.canvas.config(width=1200,height=800)
+		self.canvas.config(xscrollcommand=self.hbar.set, yscrollcommand=self.vbar.set)
+		self.canvas.config(xscrollcommand=self.hbar.set, yscrollcommand=self.vbar.set)
+
+		self.canvas.bind("<Button 1>", self.predict_sample)
+
+
+	def predict_sample(self,event):
+		canvas = event.widget
+		x = canvas.canvasx(event.x)
+		y = canvas.canvasy(event.y)
+		x,y = int(x),int(y)
+		print [self.rgbImg[y][x]]
+		print str(x)+" "+str(y)+" "+str(clf.predict([self.rgbImg[y][x][1],self.rgbImg[y][x][2],self.rgbImg[y][x][0]]))
+
+	def openFile(self):
+		self.fileName = tkFileDialog.askopenfilename(parent=self.root)
+		print self.fileName
+		self.canvas.delete(self.imgDisplayed)
+		self.labels = dict() # wipe records
+		f = sp.ndimage.imread(self.fileName)
+		# f = cca.luminance_weighted_gray_world(f) # optional color correction algorithms
+		misc.imsave('temp.png', f)
+		f = Image.open('temp.png')
+		photo = ImageTk.PhotoImage(f)
+		self.imgDisplayed = self.canvas.create_image(0,0,image=photo, anchor='nw', state=NORMAL)
+		self.canvas.config(xscrollcommand=self.hbar.set, yscrollcommand=self.vbar.set,scrollregion=(0, 0, photo.width(), photo.height()))
+		self.canvas.image = photo 
+		self.canvas.grid(row=0,column=0)
+		self.rgbImg = sp.ndimage.imread('temp.png')
+		self.labImg = color.rgb2lab(copy.deepcopy(rgbImg))
+
+
+	def close(self):
+		self.root.destroy()
+
+
+
+
+
+root = Tk()
+
+app = App(root)
+root.mainloop()
