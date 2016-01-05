@@ -25,6 +25,10 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn import tree, neighbors
 from sklearn.externals.six import StringIO 
 import pydot
+import Pickle
+
+showGraphs = False
+
 
 def ColorMatch(RGB):
 	return RGBColorMatch(RGB[0],RGB[1],RGB[2])
@@ -35,7 +39,7 @@ def draw(img):
 	plt.show()
 	return fig
 
-sources = glob.glob("images/TrainingSet/*.data")
+sources = glob.glob("ColorLabels/*.data")
 print "analyzing files : "+ str(sources) 
 imgs = []
 
@@ -51,15 +55,16 @@ for source in sources:
 		filename+='.JPG'
 	print filename
 
-	img = sp.ndimage.imread('images/TrainingSet/'+filename)
-	# img = cca.luminance_weighted_gray_world(img)
+	img = sp.ndimage.imread('images/'+filename)
+	#img = cca.luminance_weighted_gray_world(img)
 	img_lab = color.rgb2lab(copy.deepcopy(img))
-	plt.figure()
-	plt.imshow(img)
-	plt.show()
-	fig = plt.figure()
-	ax = fig.add_subplot(121, projection='3d',title="RGB")
-	ax2 = fig.add_subplot(122, projection='3d',title="LAB")
+	if showGraphs:
+		plt.figure()
+		plt.imshow(img)
+		plt.show()
+		fig = plt.figure()
+		ax = fig.add_subplot(121, projection='3d',title="RGB")
+		ax2 = fig.add_subplot(122, projection='3d',title="LAB")
 	f = open(source,'r')
 	lines = f.readlines()
 	for line in lines:
@@ -74,8 +79,9 @@ for source in sources:
 		green = img[y][x][1]
 		blue = img[y][x][2]
 		[l,a,b] = img[y][x]
-		ax.scatter(xs=red,ys=green,zs=blue,c=c,marker='x')
-		ax2.scatter(xs=a,ys=b,zs=l,c=c,marker='x')
+		if showGraphs:
+			ax.scatter(xs=red,ys=green,zs=blue,c=c,marker='x')
+			ax2.scatter(xs=a,ys=b,zs=l,c=c,marker='x')
 		if not c in cumulative.keys():
 			cumulative[c] = [(red,green,blue)]
 			cumulative2[c] = [(a,b,l)]
@@ -83,28 +89,31 @@ for source in sources:
 			cumulative[c].append((red,green,blue))
 			cumulative2[c].append((a,b,l))
 		print x,y,c, l, a, b
-	ax.set_xlabel('RED')
-	ax.set_ylabel('GREEN')
-	ax.set_zlabel('BLUE')
-	ax2.set_xlabel('A')
-	ax2.set_ylabel('B')
-	ax2.set_zlabel('L')
-	plt.show()
-plt.close()
-print 'displaying cumulative colors'
-fig=plt.figure()
-ax = fig.add_subplot(121, projection='3d')
-ax2 = fig.add_subplot(122, projection='3d')
+	if showGraphs:
+		ax.set_xlabel('RED')
+		ax.set_ylabel('GREEN')
+		ax.set_zlabel('BLUE')
+		ax2.set_xlabel('A')
+		ax2.set_ylabel('B')
+		ax2.set_zlabel('L')
+		plt.show()
+if showGraphs:
+	plt.close()
+	fig=plt.figure()
+	ax = fig.add_subplot(121, projection='3d')
+	ax2 = fig.add_subplot(122, projection='3d')
 rgb_data = []
 rgb_labels = []
 lab_data = []
 lab_labels = []
 for c in cumulative.keys():
 	for (r,b,g) in cumulative[c]:
-		ax.scatter(xs=r,ys=g,zs=b,c=c,marker='x')
+		if showGraphs:
+			ax.scatter(xs=r,ys=g,zs=b,c=c,marker='x')
 		rgb_data.append([r,g,b,c])
 	for (a,b,l) in cumulative2[c]:
-		ax2.scatter(xs=a,ys=b,zs=l,c=c,marker='x')
+		if showGraphs:
+			ax2.scatter(xs=a,ys=b,zs=l,c=c,marker='x')
 		lab_data.append([a,b,l,c])
 rgb_data_temp = np.random.permutation(rgb_data)
 lab_data_temp = np.random.permutation(lab_data)
@@ -113,19 +122,20 @@ lab_data = []
 lab_labels = []
 lab_labels = []
 for [r,g,b,c] in rgb_data_temp:
-	rgb_data.append([r,g,b])
+	rgb_data.append(np.array([r,g,b]))
 	rgb_labels.append(c)
 for [a,b,l,c] in lab_data_temp:
-	lab_data.append([a,b,l])
+	lab_data.append(np.array([a,b,l]))
 	lab_labels.append(c)
-ax.set_xlabel('RED')
-ax.set_ylabel('GREEN')
-ax.set_zlabel('BLUE')
-ax2.set_xlabel('A')
-ax2.set_ylabel('B')
-ax2.set_zlabel('L')
-plt.show()
-plt.close()
+if showGraphs:
+	ax.set_xlabel('RED')
+	ax.set_ylabel('GREEN')
+	ax.set_zlabel('BLUE')
+	ax2.set_xlabel('A')
+	ax2.set_ylabel('B')
+	ax2.set_zlabel('L')
+	plt.show()
+	plt.close()
 
 
 # clf = tree.DecisionTreeClassifier(max_depth=None,min_samples_split=1)
@@ -139,11 +149,18 @@ plt.close()
 # graph.write_pdf("colors.pdf") 
 
 
-clf = RandomForestClassifier(n_estimators=10)
+
+print lab_data
+print lab_labels
+clf = RandomForestClassifier(n_estimators=20)
 clf.fit(lab_data, lab_labels)
-print rgb_data
-print rgb_labels
 print clf
+
+# print lab_data
+# print lab_labels
+# clf = svm.SVC(gamma=0.05)
+# clf.fit(lab_data, lab_labels)
+# print clf 
 
 class App:
 	
@@ -170,7 +187,7 @@ class App:
 		self.imgWeight = 0
 		self.rgbImg = None
 		self.labImg = None
-		
+
 
 		self.cframe = Frame(frame)
 		self.canvas = Canvas(self.cframe,width=1200,height=800)		
@@ -195,7 +212,7 @@ class App:
 		y = canvas.canvasy(event.y)
 		x,y = int(x),int(y)
 		print [self.rgbImg[y][x]]
-		print str(x)+" "+str(y)+" "+str(clf.predict([self.rgbImg[y][x][1],self.rgbImg[y][x][2],self.rgbImg[y][x][0]]))
+		print str(x)+" "+str(y)+" "+str(clf.predict(np.array([self.rgbImg[y][x][1],self.rgbImg[y][x][2],self.rgbImg[y][x][0]]).reshape(1,-1)))
 
 	def openFile(self):
 		self.fileName = tkFileDialog.askopenfilename(parent=self.root)
@@ -203,7 +220,7 @@ class App:
 		self.canvas.delete(self.imgDisplayed)
 		self.labels = dict() # wipe records
 		f = sp.ndimage.imread(self.fileName)
-		# f = cca.luminance_weighted_gray_world(f) # optional color correction algorithms
+		#f = cca.luminance_weighted_gray_world(f) # optional color correction algorithms
 		misc.imsave('temp.png', f)
 		f = Image.open('temp.png')
 		photo = ImageTk.PhotoImage(f)
@@ -212,7 +229,7 @@ class App:
 		self.canvas.image = photo 
 		self.canvas.grid(row=0,column=0)
 		self.rgbImg = sp.ndimage.imread('temp.png')
-		self.labImg = color.rgb2lab(copy.deepcopy(rgbImg))
+		self.labImg = color.rgb2lab(copy.deepcopy(self.rgbImg))
 
 
 	def close(self):

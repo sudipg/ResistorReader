@@ -15,7 +15,6 @@ import sys
 import math
 from scipy import ndimage
 from transforms import *
-from colors import *
 
 """
 -------------------------------------------------------------------------------
@@ -35,7 +34,7 @@ if len(sys.argv)>1 and sys.argv[1] == '-s':
     print 'selected sources:\r\n'
     print 'template is '+imgSource+' and the test image is '+templateSource;
 elif len(sys.argv)>1 and sys.argv[1] == '-d':
-    imgSource = 'rs9.png'
+    imgSource = 'test_res.png'
     templateSource = 'r10t.png'
 else:
     imgSource = raw_input('Please enter the template picture name : ')
@@ -43,8 +42,6 @@ else:
 img = cv2.imread('images/'+imgSource,0)
 template = cv2.imread('images/'+templateSource,0)
 matches = []
-
-ROI_hsv = None
 
 def main():
     """
@@ -55,31 +52,19 @@ def main():
 
     ---------------------------------------------------------------------------
     """
-    global ROI_hsv
 
     imgBlurred = cv2.blur(img, (14,14))
     templateBlurred = cv2.blur(template, (5,5))
-    # create ORB object for detecting features
-    orb = cv2.ORB_create()
-    kpT, desT = orb.detectAndCompute(templateBlurred, None)
-    kpI, desI = orb.detectAndCompute(imgBlurred, None)
-
-    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
-    matches = bf.match(desT, desI)
-    matches = sorted(matches, key = lambda x:x.distance)
 
     # now draw them on top of the image
     matchedKeypointsX, matchedKeypointsY, img3 = findMatches(templateBlurred, imgBlurred)
-    bgr_image = cv2.imread('images/'+imgSource)
-    rgb_image = cv2.cvtColor(bgr_image,cv2.COLOR_BGR2RGB)
-    hsv_image = cv2.cvtColor(bgr_image,cv2.COLOR_BGR2HSV)
+
     plt.clf()
     plt.subplot(311)
     plt.imshow(img3, cmap = 'gray')
-    lowerBoundX, upperBoundX, lowerBoundY, upperBoundY = findBoxAroundNthPercentile(matchedKeypointsX, matchedKeypointsY, 0.5, 50)
+    lowerBoundX, upperBoundX, lowerBoundY, upperBoundY = findBoxAroundNthPercentile(matchedKeypointsX, matchedKeypointsY, 0.5, 120)
     plt.subplot(312)
     ROI = img[lowerBoundY:upperBoundY, lowerBoundX:upperBoundX]
-    ROI_bgr = rgb_image[lowerBoundY:upperBoundY, lowerBoundX:upperBoundX]
     plt.imshow(ROI, cmap = 'gray')
     plt.subplot(313)
     highPassThresholded = filterAndThreshold(ROI)
@@ -87,26 +72,7 @@ def main():
     a,b,x_range,y_range, shape = getLineOfBestFit(highPassThresholded)
     plt.plot(x_range,y_range,'ro')
     plt.show()
-    findBestAngle(highPassThresholded, shape)
-
-    ######
-    # colors!
-    ######
-    #plt.clf()
-    #ROI_hsv = cv2.cvtColor(ROI_bgr,cv2.COLOR_BGR2HSV)
-    #H,S,V = cv2.split(ROI_hsv)
-    #plt.subplot(411)
-    #plt.imshow(ROI_bgr)
-    #plt.subplot(412)
-    #plt.title("Hue")
-    #plt.imshow(H, cmap = 'gray')
-    #plt.subplot(413)
-    #plt.title("Saturation")
-    #plt.imshow(S, cmap = 'gray')
-    #plt.subplot(414)
-    #plt.title("Value")
-    #plt.imshow(V, cmap = 'gray')
-    #plt.show()
+    #findBestAngle(highPassThresholded, shape)
 
 def findBestAngle(img, shape):
     """
@@ -162,7 +128,7 @@ def findBestAngle(img, shape):
     highCost = None
     costs = dict()
 
-    for angle in [x*0.5 for x in range(190)]:
+    for angle in [x*0.5 for x in range(180)]:
         compImg = rotate(compImg, angle, xCenter, yCenter)
         newCost = costNaive(compImg, original, width, height)
         compImg = rotate(compImg, -angle, xCenter, yCenter)
@@ -178,6 +144,7 @@ def findBestAngle(img, shape):
     compImg = paint(compImg, len(img[0]), len(img))
 
     plt.clf()
+    plt.figure()
     plt.subplot(211)
     plt.imshow(compImg,cmap='gray')
     plt.plot(xCenter,yCenter,'ro')
@@ -188,7 +155,6 @@ def findBestAngle(img, shape):
     plt.ylim(0,len(img))
     plt.xlim(0,len(img[0]))
     plt.show()
-    return bestAngle, xCenter, yCenter
 
 def costNaive(img, compImg, w, h):
     """
@@ -229,44 +195,6 @@ def getLineOfBestFit(img):
 
     
     shape = np.transpose(np.matrix([xPoints, yPoints]))
-    plt.clf()
-    plt.subplot(311)
-    plt.imshow(img3, cmap = 'gray')
-    lowerBoundX, upperBoundX, lowerBoundY, upperBoundY = findBoxAroundNthPercentile(matchedKeypointsX, matchedKeypointsY, 0.5, 50)
-    plt.subplot(312)
-    ROI = img[lowerBoundY:upperBoundY, lowerBoundX:upperBoundX]
-    plt.imshow(ROI, cmap = 'gray')
-    plt.subplot(313)
-    highPassThresholded = filterAndThreshold(ROI)
-    plt.imshow(highPassThresholded, cmap = 'gray')
-    a,b,x_range,y_range = getLineOfBestFit(highPassThresholded)
-    plt.plot(x_range,y_range,'ro')
-    plt.show()
-
-def filterAndThreshold(img):
-    """
-    Take the ROI as an image and return the binary thresholded version of the ROI
-    """
-    lowPass = ndimage.gaussian_filter(img,10)
-    highPass = img - lowPass
-    highPass = ndimage.gaussian_filter(highPass,10)
-    highPassThresholded = map(lambda x: np.array([255 if y>130 else 0 for y in x]),highPass)
-    return highPassThresholded
-
-
-def getLineOfBestFit(img):
-    """
-    Analyze given image using filters and perform a best fit matching
-    return a, b such that the line of best fit for that image is y = a*x + b
-    """
-    a = b = 0
-    xPoints = []
-    yPoints = []
-    for y in xrange(len(img)):
-        for x in xrange(len(img[y])):
-            if img[y][x] > 0:
-                xPoints.append(x)
-                yPoints.append(y)
 
     #least sqaures regression also gives the same result.
     [a,b] = np.polyfit(xPoints,yPoints,1)
@@ -379,7 +307,6 @@ def discreteFourierTransform(img):
     dft = np.fft.fftshift(dft)
     dft  = 20 * np.log(np.abs(dft))
     return dft
-
 
 
 if __name__ == '__main__':
