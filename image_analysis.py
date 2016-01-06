@@ -10,7 +10,6 @@ import math
 from scipy import ndimage, misc
 import scipy as sp
 from transforms import *
-from colors import *
 import matplotlib.image as mpimg
 from mpl_toolkits.mplot3d import Axes3D
 import glob
@@ -31,10 +30,6 @@ from sklearn.ensemble import AdaBoostClassifier
 from sklearn.cross_validation import cross_val_score
 
 showGraphs = False
-
-
-def ColorMatch(RGB):
-	return RGBColorMatch(RGB[0],RGB[1],RGB[2])
 
 def draw(img):
 	fig = plt.figure()
