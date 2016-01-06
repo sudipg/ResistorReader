@@ -25,7 +25,10 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn import tree, neighbors
 from sklearn.externals.six import StringIO 
 import pydot
-import Pickle
+import pickle
+from sklearn.naive_bayes import GaussianNB
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.cross_validation import cross_val_score
 
 showGraphs = False
 
@@ -122,10 +125,10 @@ lab_data = []
 lab_labels = []
 lab_labels = []
 for [r,g,b,c] in rgb_data_temp:
-	rgb_data.append(np.array([r,g,b]))
+	rgb_data.append(np.array([r,g,b]).astype(np.float))
 	rgb_labels.append(c)
 for [a,b,l,c] in lab_data_temp:
-	lab_data.append(np.array([a,b,l]))
+	lab_data.append(np.array([a,b,l]).astype(np.float))
 	lab_labels.append(c)
 if showGraphs:
 	ax.set_xlabel('RED')
@@ -148,6 +151,12 @@ if showGraphs:
 # graph = pydot.graph_from_dot_data(dot_data.getvalue()) 
 # graph.write_pdf("colors.pdf") 
 
+# print lab_data
+# print lab_labels
+# clf = AdaBoostClassifier(n_estimators=120).fit(lab_data, lab_labels)
+# scores = cross_val_score(clf, lab_data, lab_labels)
+# print scores
+# print clf
 
 
 print lab_data
@@ -158,7 +167,7 @@ print clf
 
 # print lab_data
 # print lab_labels
-# clf = svm.SVC(gamma=0.05)
+# clf = svm.SVC(tol=0.001,gamma=0.01)
 # clf.fit(lab_data, lab_labels)
 # print clf 
 
