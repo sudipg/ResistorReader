@@ -32,7 +32,7 @@ if len(sys.argv)>1 and sys.argv[1] == '-s':
     imgSource = sys.argv[2]
     templateSource = sys.argv[3]
     print 'selected sources:\r\n'
-    print 'template is '+imgSource+' and the test image is '+templateSource;
+    print 'template is '+templateSource+' and the test image is '+imgSource;
 elif len(sys.argv)>1 and sys.argv[1] == '-d':
     imgSource = 'test_res.png'
     templateSource = 'r10t.png'
@@ -52,8 +52,8 @@ def main():
 
     ---------------------------------------------------------------------------
     """
-
-    imgBlurred = cv2.blur(img, (14,14))
+    blurAmt = max(len(img)//100,14)
+    imgBlurred = cv2.blur(img, (blurAmt,blurAmt))
     templateBlurred = cv2.blur(template, (5,5))
 
     # now draw them on top of the image
@@ -62,7 +62,7 @@ def main():
     plt.clf()
     plt.subplot(311)
     plt.imshow(img3, cmap = 'gray')
-    lowerBoundX, upperBoundX, lowerBoundY, upperBoundY = findBoxAroundNthPercentile(matchedKeypointsX, matchedKeypointsY, 0.5, 120)
+    lowerBoundX, upperBoundX, lowerBoundY, upperBoundY = findBoxAroundNthPercentile(matchedKeypointsX, matchedKeypointsY, 0.5, blurAmt*15)
     plt.subplot(312)
     ROI = img[lowerBoundY:upperBoundY, lowerBoundX:upperBoundX]
     plt.imshow(ROI, cmap = 'gray')
