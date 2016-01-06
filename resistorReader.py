@@ -1,12 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-------------------------------------------------------------------------------
-Created on Sat Jul 11 20:45:07 2015
-
 Find the region of interest in the sample image using a template from file.
 
 @author: sudipguha and Charles (XiaRui) Zhang
--------------------------------------------------------------------------------
 """
 import numpy as np
 import cv2
@@ -15,18 +11,6 @@ import sys
 import math
 from scipy import ndimage
 from transforms import *
-
-"""
--------------------------------------------------------------------------------
-Keeping images in the global frame to have better interactive debug access.
-List of important debug objects:
-- template image
-- test image
-- list of matches and keypoints
-
--------------------------------------------------------------------------------
-"""
-
 
 if len(sys.argv)>1 and sys.argv[1] == '-s':
     imgSource = sys.argv[2]
@@ -39,20 +23,13 @@ elif len(sys.argv)>1 and sys.argv[1] == '-d':
 else:
     imgSource = raw_input('Please enter the template picture name : ')
     templateSource = raw_input('Please enter the template picture name : ')
+
+# Keep images in the global frame to have better interactive debug access.
 img = cv2.imread('images/'+imgSource,0)
 template = cv2.imread('images/'+templateSource,0)
 matches = []
 
 def main():
-    """
-    ---------------------------------------------------------------------------
-
-    TODO: Consider using command line arguments for image names?
-    Something along the lines of sys.argv?
-
-    ---------------------------------------------------------------------------
-    """
-
     imgBlurred = cv2.blur(img, (14,14))
     templateBlurred = cv2.blur(template, (5,5))
 
@@ -157,10 +134,7 @@ def findBestAngle(img, shape):
     plt.show()
 
 def costNaive(img, compImg, w, h):
-    """
-    takes 2 matrices 
-    returns integer denoting the correlation
-    """
+    """Calculate the correlation of two matrices."""
     im1 = paint(img, w, h)
     im2 = paint(compImg, w, h)
     conv = np.multiply(im1,im2)
@@ -177,7 +151,6 @@ def filterAndThreshold(img):
     highPass = ndimage.gaussian_filter(highPass,10)
     highPassThresholded = map(lambda x: np.array([255 if y>130 else 0 for y in x]),highPass)
     return highPassThresholded
-
 
 def getLineOfBestFit(img):
     """
@@ -204,18 +177,7 @@ def getLineOfBestFit(img):
     return a,b,x_range,y_range, shape
     
 def findMatches(template, img):
-    """
-    ---------------------------------------------------------------------------
-    Finds keypoints that matches the TEMPLATE in IMG.
-    
-    Assumes template and img are 2D arrays (i.e. Pictures)
-    
-    RETURNS the coordinates of all matched keypoints in IMG.
-
-    The return format is: xCoordinates, yCoordinates.
-    ---------------------------------------------------------------------------
-    """
-
+    """Return coordinates for all key points in 'img' that match 'template'."""
     orb = cv2.ORB_create()
     kpTemplate, desTemplate = orb.detectAndCompute(template, None)
     kpImg, desImg = orb.detectAndCompute(img, None)
@@ -245,42 +207,25 @@ def plotMatches(template, img):
     plt.imshow(img3)
     plt.show()
 
-def findLowerAndUpperPercentile(arr, lowerPercentile, upperPercentile):
+def findLowerAndUpperPercentile(arr, lower, upper):
+    """Return a 2-tuple with the lower and upper percentiles of 'arr'.
+
+    >>> findLowerAndUpperPercentile([1, 2, 3], 0.25, 0.75)
+    (1, 3)
     """
-    ---------------------------------------------------------------------------
-
-    TODO: Algorithmitically, this may not be ideal.
-    Currently, it takes O(n log(n)) time.
-    Maybe use better algorithm? For now, shouldn't be too bad?
-
-    Given an array ARR, it returns 2 values in the array. 
-
-    The first value's percentile in the ARR is = lowerPercentile.
-
-    The second value's percentile in the ARR is = upperPercentile
-
-    ---------------------------------------------------------------------------
-    """
-
-    if (lowerPercentile > 1 or upperPercentile > 1 or lowerPercentile < 0 or upperPercentile < 0):
-        print("findLowerAndUpperPercentile Error: One (or more) percentile is (are) invalid.\n")
-        print("lowerPercentile: " + str(lowerPercentile) + "upperPercentile: " + str(upperPercentile))
-    else:
-        temp = sorted(arr, key = lambda x:x)
-        return temp[int(len(temp) * lowerPercentile)], temp[int(len(temp) * upperPercentile)]
+    assert 0 < lower < 1 and 0 < upper < 1
+    l_index, u_index = int(len(arr) * lower), int(len(arr) * upper)
+    arr.sort()
+    return (arr[l_index], arr[u_index])
 
 def findBoxAroundNthPercentile(keypointsX, keypointsY, percentile, border):
     """
-    ---------------------------------------------------------------------------
-
     Given the X and Y coordinates of all keypoints, this returns 4 values.
 
     These 4 values, represent the lower and upper bound on X and Y coordinates 
     such that PERCENTILE percent of all key points are inside that box.
 
     Also adds some padding to the box in the form of BORDER
-
-    ---------------------------------------------------------------------------
     """
     
     if (percentile < 0 or percentile > 1):
@@ -295,19 +240,13 @@ def findBoxAroundNthPercentile(keypointsX, keypointsY, percentile, border):
         return lowerBoundX - border, upperBoundX + border, lowerBoundY - border, upperBoundY + border    
 
 def discreteFourierTransform(img):
-    """
-    ---------------------------------------------------------------------------
-    
-    Given an image in the form of IMG, returns the DFT "img"
+    """Given an image in the form of IMG, returns the DFT "img"
     NOTE: the magnitude ONLY is returned and in dB scale
-
-    ---------------------------------------------------------------------------
     """
     dft = np.fft.fft2(img)
     dft = np.fft.fftshift(dft)
     dft  = 20 * np.log(np.abs(dft))
     return dft
-
 
 if __name__ == '__main__':
     main()
