@@ -1,2 +1,7 @@
 images/*
 *.pyc
+*.png
+*.JPG
+*.data
+*.pdata
+*.pdf

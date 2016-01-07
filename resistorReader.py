@@ -9,8 +9,10 @@ import cv2
 from matplotlib import pyplot as plt
 import sys
 import math
-from scipy import ndimage
+from scipy import ndimage, misc
 from transforms import *
+from image_quantization import *
+import pdb
 
 if len(sys.argv)>1 and sys.argv[1] == '-s':
     imgSource = sys.argv[2]
@@ -57,8 +59,16 @@ def main():
     plt.imshow(highPassThresholded, cmap = 'gray')
     a,b,x_range,y_range, shape = getLineOfBestFit(highPassThresholded)
     plt.plot(x_range,y_range,'ro')
-    plt.show()
+    #plt.show()
+
     #findBestAngle(highPassThresholded, shape)
+    img_c_cv = cv2.cvtColor(cv2.imread('images/'+imgSource), cv2.COLOR_BGR2RGB)
+    img_c = misc.imread('images/'+imgSource)
+    img_c = ndimage.interpolation.rotate(img_c, -90)
+    ROI_c = img_c[lowerBoundY:upperBoundY, lowerBoundX:upperBoundX,:]
+    #pdb.set_trace()
+    ROI_q = quantize_kmeans(ROI_c,num_colors=15)
+    misc.imsave('images/'+imgSource.split('.')[0]+'_q.'+imgSource.split('.')[1], ROI_q)
 
 def findBestAngle(img, shape):
     """
