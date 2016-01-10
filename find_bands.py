@@ -8,6 +8,21 @@ import math
 import pickle
 from matplotlib import pyplot as plt
 import copy
+import cv2
+
+def filterAndThreshold(img, threshold = 130):
+    """
+    Take the ROI as an image and return the binary thresholded version of the ROI
+    steps implmented: 1. Equivalent of Gaussian high pass filter, 2. thresholding to make a binary image to use later for finding the axis, etc
+    """
+    lowPass = ndimage.gaussian_filter(img,10)
+    highPass = img - lowPass
+    highPass = ndimage.gaussian_filter(highPass,10)
+    #highPassThresholded = map(lambda x: np.array([255 if y>threshold else 0 for y in x]),highPass)
+    shape=highPass.shape
+    highPass = highPass.reshape(-1)
+    highPassThresholded = np.array(map(lambda x: 255 if x>threshold else 0, highPass)).reshape(shape)
+    return highPassThresholded
 
 
 def find_bands(ROI, line_of_best_fit,clf=None):
@@ -28,6 +43,22 @@ def find_bands(ROI, line_of_best_fit,clf=None):
 			print type(e)
 			print "Error : please specify a trained classifier"
 			return None
+
+
+
+	ROI_grey = cv2.cvtColor(ROI, cv2.COLOR_RGB2GRAY)
+	print "found grayscale"
+	plt.imshow(ROI_grey)
+	plt.show()
+	plt.cla()
+
+
+	BW = filterAndThreshold(ROI_grey,120)
+	plt.imshow(BW)
+	plt.show()
+	plt.cla()
+
+	pdb.set_trace()
 
 	possible_sequences = []
 	plt.cla()
@@ -72,4 +103,24 @@ def advance_line(line_axis, ortho_line, x_amount):
 	y_amount = x_amount*get_slope(line_axis)
 	return [map(lambda x: x+x_amount, ortho_line[0]), map(lambda y: y+y_amount, ortho_line[1])]
 
+def get_sample_bracket(line, binary_img):
+	"""
+	takes a binary image (filter and threshold), line of best fit
+	return rectangular matrix of RGB values for the sampling hot spots
+	"""
+	pass
 
+
+def main():
+	try:
+		ROI = misc.imread('current_ROI.jpg')
+		lf = open('current_lobf.pdata' ,'r')
+		line_of_best_fit = pickle.load(lf)
+		lf.close()
+	except Excption as e:
+		print type(e)
+		return None
+	find_bands(ROI, line_of_best_fit)
+
+if __name__ == '__main__':
+    main()

@@ -12,6 +12,7 @@ import math
 from scipy import ndimage, misc
 from transforms import *
 from image_quantization import *
+from find_bands import *
 import pdb
 
 if len(sys.argv)>1 and sys.argv[1] == '-s':
@@ -42,7 +43,7 @@ def main():
     """
     blurAmt = max(len(img)//100,14)
     imgBlurred = cv2.blur(img, (blurAmt,blurAmt))
-    templateBlurred = cv2.blur(template, (5,5))
+    templateBlurred = cv2.blur(template, (4,4))
 
     # now draw them on top of the image
     matchedKeypointsX, matchedKeypointsY, img3 = findMatches(templateBlurred, imgBlurred)
@@ -59,16 +60,23 @@ def main():
     plt.imshow(highPassThresholded, cmap = 'gray')
     a,b,x_range,y_range, shape = getLineOfBestFit(highPassThresholded)
     plt.plot(x_range,y_range,'ro')
-    #plt.show()
+    [ox_range,oy_range] = get_orthogonal_line([x_range, y_range], (x_range[0],y_range[0]),20)
+    plt.plot(ox_range,oy_range,'ro')
+    plt.show()
 
     #findBestAngle(highPassThresholded, shape)
     img_c_cv = cv2.cvtColor(cv2.imread('images/'+imgSource), cv2.COLOR_BGR2RGB)
     img_c = misc.imread('images/'+imgSource)
     img_c = ndimage.interpolation.rotate(img_c, -90)
-    ROI_c = img_c[lowerBoundY:upperBoundY, lowerBoundX:upperBoundX,:]
-    #pdb.set_trace()
-    ROI_q = quantize_kmeans(ROI_c,num_colors=15)
-    misc.imsave('images/'+imgSource.split('.')[0]+'_q.'+imgSource.split('.')[1], ROI_q)
+    ROI_c = img_c_cv[lowerBoundY:upperBoundY, lowerBoundX:upperBoundX,:]
+    pdb.set_trace()
+    misc.imsave('current_ROI.jpg', ROI_c)
+    lf = open('current_lobf.pdata', 'w')
+    pickle.dump([x_range,y_range], lf)
+    lf.close()
+    print find_bands(ROI_c, line_of_best_fit=[x_range,y_range])
+    #ROI_q = quantize_kmeans(ROI_c,num_colors=15)
+    #misc.imsave('images/'+imgSource.split('.')[0]+'_q.'+imgSource.split('.')[1], ROI_q)
 
 def findBestAngle(img, shape):
     """
@@ -159,17 +167,6 @@ def costNaive(img, compImg, w, h):
     conv = np.multiply(im1,im2)
     cost = np.sum(conv)
     return cost
-
-def filterAndThreshold(img):
-    """
-    Take the ROI as an image and return the binary thresholded version of the ROI
-    steps implmented: 1. Equivalent of Gaussian high pass filter, 2. thresholding to make a binary image to use later for finding the axis, etc
-    """
-    lowPass = ndimage.gaussian_filter(img,10)
-    highPass = img - lowPass
-    highPass = ndimage.gaussian_filter(highPass,10)
-    highPassThresholded = map(lambda x: np.array([255 if y>130 else 0 for y in x]),highPass)
-    return highPassThresholded
 
 def getLineOfBestFit(img):
     """
