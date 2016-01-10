@@ -15,8 +15,8 @@ import matplotlib.image as mpimg
 from PIL import Image, ImageTk
 import pdb
 import copy
-import colorcorrect.algorithm as cca
-from colorcorrect.util import from_pil, to_pil
+#import colorcorrect.algorithm as cca
+#from colorcorrect.util import from_pil, to_pil
 
 
 class App:
