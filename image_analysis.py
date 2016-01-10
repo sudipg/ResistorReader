@@ -13,7 +13,7 @@ from transforms import *
 import matplotlib.image as mpimg
 from mpl_toolkits.mplot3d import Axes3D
 import glob
-import colorcorrect.algorithm as cca
+#import colorcorrect.algorithm as cca
 from skimage import color
 from sklearn import svm
 from Tkinter import *
@@ -162,8 +162,8 @@ except Exception as e:
 	# print clf
 
 
-	print lab_data
-	print lab_labels
+	print(lab_data)
+	print(lab_labels)
 	clf = RandomForestClassifier(n_estimators=20)
 	clf.fit(lab_data, lab_labels)
 	print clf
