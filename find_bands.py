@@ -10,6 +10,8 @@ from matplotlib import pyplot as plt
 import copy
 import cv2
 
+colors = ["red", "brown", "blue", "black","yellow","violet","green","grey","white","gold","silver","orange","violet"];
+
 def filterAndThreshold(img, threshold = 130):
     """
     Take the ROI as an image and return the binary thresholded version of the ROI
@@ -53,25 +55,43 @@ def find_bands(ROI, line_of_best_fit,clf=None):
 	plt.cla()
 
 
-	BW = filterAndThreshold(ROI_grey,120)
-	plt.imshow(BW)
-	plt.show()
-	plt.cla()
-
-	pdb.set_trace()
+	# BW = filterAndThreshold(ROI_grey,120)
+	# plt.imshow(BW)
+	# plt.show()
+	# plt.cla()
 
 	possible_sequences = []
 	plt.cla()
-	fig = plt.imshow(ROI)
-	start_ortho = get_orthogonal_line(line_of_best_fit, (line_of_best_fit[0][0], line_of_best_fit[1][0]), 20)
+	plt.imshow(ROI)
+	start_ortho = get_orthogonal_line(line_of_best_fit, (line_of_best_fit[0][0], line_of_best_fit[1][0]), len(ROI//5))
 	ortho_line = copy.deepcopy(start_ortho)
 	i = 0
-	x_step = 3
-	print 
+	x_step = 1
+	distributions = []
 	while i < len(line_of_best_fit[0]):
 		ortho_line = advance_line(line_of_best_fit, ortho_line, x_step)
-		plt.plot(ortho_line[0], ortho_line[1], 'b*')
+		plt.plot(ortho_line[0], ortho_line[1],'.')
+		distributions.append(get_distrubution(ROI, ortho_line, clf))
 		i+=x_step
+	plt.show()
+	pdb.set_trace()
+
+	plt.cla()
+	num_colors = len(colors)
+	num_columns = 4
+	num_rows = np.ceil(float(num_colors)/num_columns)
+	for i in xrange(num_colors):
+		plt.subplot(num_rows, num_columns, i)
+		color_current = colors[i]
+		distributionX = []
+		distributionY = []
+		for j in xrange(len(distributions)):
+			distributionX.append(j)
+			distributionY.append(distributions[j][color_current])
+		plt.plot(distributionX, distributionY, 'b-')
+		plt.xlabel('x')
+		plt.ylabel(color_current)
+	plt.title('color level distributions along axis')
 	plt.show()
 	plt.cla()
 
@@ -108,8 +128,24 @@ def get_sample_bracket(line, binary_img):
 	takes a binary image (filter and threshold), line of best fit
 	return rectangular matrix of RGB values for the sampling hot spots
 	"""
+	#to do
 	pass
 
+def get_distrubution(img, line, clf):
+	"""
+	returns a distribution of the colors and the number of pixels associates as
+	a dictionary
+	"""
+	distribution = dict(map(lambda x: (x,0),colors))
+	X = line[0]
+	Y = line[1]
+	for i in xrange(len(X)):
+		try:
+			[color] = clf.predict([img[Y[i]][X[i]]])
+			distribution[color]+=1
+		except Exception as e:
+			continue
+	return distribution
 
 def main():
 	try:
@@ -117,7 +153,7 @@ def main():
 		lf = open('current_lobf.pdata' ,'r')
 		line_of_best_fit = pickle.load(lf)
 		lf.close()
-	except Excption as e:
+	except Exception as e:
 		print type(e)
 		return None
 	find_bands(ROI, line_of_best_fit)
