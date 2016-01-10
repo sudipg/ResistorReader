@@ -13,7 +13,7 @@ from transforms import *
 import matplotlib.image as mpimg
 from mpl_toolkits.mplot3d import Axes3D
 import glob
-#import colorcorrect.algorithm as cca
+import colorcorrect.algorithm as cca
 from skimage import color
 from sklearn import svm
 from Tkinter import *
@@ -29,7 +29,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.cross_validation import cross_val_score
 
-showGraphs = False
+showGraphs = True
 
 def draw(img):
 	fig = plt.figure()
@@ -45,7 +45,7 @@ try:
 except Exception as e:
 	print type(e)
 
-	sources = glob.glob("ColorLabels/*.data")
+	sources = glob.glob("images/*.data")
 	print "analyzing files : "+ str(sources) 
 	imgs = []
 
@@ -84,7 +84,7 @@ except Exception as e:
 			red = img[y][x][0]
 			green = img[y][x][1]
 			blue = img[y][x][2]
-			[l,a,b] = img[y][x]
+			[l,a,b] = img_lab[y][x]
 			if showGraphs:
 				ax.scatter(xs=red,ys=green,zs=blue,c=c,marker='x')
 				ax2.scatter(xs=a,ys=b,zs=l,c=c,marker='x')
@@ -227,7 +227,7 @@ class App:
 		y = canvas.canvasy(event.y)
 		x,y = int(x),int(y)
 		print [self.rgbImg[y][x]]
-		print str(x)+" "+str(y)+" "+str(clf.predict(np.array([self.rgbImg[y][x][1],self.rgbImg[y][x][2],self.rgbImg[y][x][0]]).reshape(1,-1)))
+		print str(x)+" "+str(y)+" "+str(clf.predict(np.array([self.labImg[y][x][1],self.labImg[y][x][2],self.labImg[y][x][0]]).reshape(1,-1)))
 
 	def openFile(self):
 		self.fileName = tkFileDialog.askopenfilename(parent=self.root)

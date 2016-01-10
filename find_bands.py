@@ -9,6 +9,9 @@ import pickle
 from matplotlib import pyplot as plt
 import copy
 import cv2
+from skimage import color
+import colorcorrect.algorithm as cca
+
 
 colors = ["red", "brown", "blue", "black","yellow","violet","green","grey","white","gold","silver","orange","violet"];
 
@@ -62,8 +65,11 @@ def find_bands(ROI, line_of_best_fit,clf=None):
 
 	possible_sequences = []
 	plt.cla()
+	#ROI = cca.luminance_weighted_gray_world(ROI)
+	pdb.set_trace()
 	plt.imshow(ROI)
-	start_ortho = get_orthogonal_line(line_of_best_fit, (line_of_best_fit[0][0], line_of_best_fit[1][0]), len(ROI//5))
+	ROI = color.rgb2lab(copy.deepcopy(ROI))
+	start_ortho = get_orthogonal_line(line_of_best_fit, (line_of_best_fit[0][0], line_of_best_fit[1][0]), len(ROI)//15)
 	ortho_line = copy.deepcopy(start_ortho)
 	i = 0
 	x_step = 1
@@ -72,6 +78,7 @@ def find_bands(ROI, line_of_best_fit,clf=None):
 		ortho_line = advance_line(line_of_best_fit, ortho_line, x_step)
 		plt.plot(ortho_line[0], ortho_line[1],'.')
 		distributions.append(get_distrubution(ROI, ortho_line, clf))
+		print distributions[len(distributions)-1]
 		i+=x_step
 	plt.show()
 	pdb.set_trace()
@@ -141,15 +148,18 @@ def get_distrubution(img, line, clf):
 	Y = line[1]
 	for i in xrange(len(X)):
 		try:
-			[color] = clf.predict([img[Y[i]][X[i]]])
+			rgbImg = img
+			[color] = clf.predict(np.array([rgbImg[Y[i]][X[i]][1],rgbImg[Y[i]][X[i]][2],rgbImg[Y[i]][X[i]][0]]).reshape(1,-1))
 			distribution[color]+=1
 		except Exception as e:
+			print e
+			print type(e)
 			continue
 	return distribution
 
 def main():
 	try:
-		ROI = misc.imread('current_ROI.jpg')
+		ROI = cv2.cvtColor(cv2.imread('current_ROI.jpg'), cv2.COLOR_BGR2RGB)
 		lf = open('current_lobf.pdata' ,'r')
 		line_of_best_fit = pickle.load(lf)
 		lf.close()

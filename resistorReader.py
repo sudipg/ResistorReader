@@ -51,6 +51,7 @@ def main():
     plt.clf()
     plt.subplot(311)
     plt.imshow(img3, cmap = 'gray')
+    pdb.set_trace()
     lowerBoundX, upperBoundX, lowerBoundY, upperBoundY = findBoxAroundNthPercentile(matchedKeypointsX, matchedKeypointsY, 0.5, blurAmt*15)
     plt.subplot(312)
     ROI = img[lowerBoundY:upperBoundY, lowerBoundX:upperBoundX]
@@ -69,7 +70,7 @@ def main():
     img_c = misc.imread('images/'+imgSource)
     img_c = ndimage.interpolation.rotate(img_c, -90)
     ROI_c = img_c_cv[lowerBoundY:upperBoundY, lowerBoundX:upperBoundX,:]
-    pdb.set_trace()
+    #pdb.set_trace()
     misc.imsave('current_ROI.jpg', ROI_c)
     lf = open('current_lobf.pdata', 'w')
     pickle.dump([x_range,y_range], lf)
