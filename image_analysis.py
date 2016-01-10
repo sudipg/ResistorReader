@@ -29,7 +29,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.cross_validation import cross_val_score
 
-showGraphs = True
+showGraphs = False
 
 def draw(img):
 	fig = plt.figure()
@@ -164,18 +164,20 @@ except Exception as e:
 
 	print(lab_data)
 	print(lab_labels)
-	clf = RandomForestClassifier(n_estimators=20)
+	clf = RandomForestClassifier(n_estimators=15)
 	clf.fit(lab_data, lab_labels)
 	print clf
 
-	pf = open('classifier.pdata','w')
-	pickle.dump(clf,pf)
-	pf.close()
+	
 	# print lab_data
 	# print lab_labels
 	# clf = svm.SVC(tol=0.001,gamma=0.01)
 	# clf.fit(lab_data, lab_labels)
 	# print clf 
+
+	pf = open('classifier.pdata','w')
+	pickle.dump(clf,pf)
+	pf.close()
 
 class App:
 	

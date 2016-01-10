@@ -66,7 +66,7 @@ def find_bands(ROI, line_of_best_fit,clf=None):
 	possible_sequences = []
 	plt.cla()
 	#ROI = cca.luminance_weighted_gray_world(ROI)
-	pdb.set_trace()
+	#pdb.set_trace()
 	plt.imshow(ROI)
 	ROI = color.rgb2lab(copy.deepcopy(ROI))
 	start_ortho = get_orthogonal_line(line_of_best_fit, (line_of_best_fit[0][0], line_of_best_fit[1][0]), len(ROI)//15)
@@ -78,7 +78,7 @@ def find_bands(ROI, line_of_best_fit,clf=None):
 		ortho_line = advance_line(line_of_best_fit, ortho_line, x_step)
 		plt.plot(ortho_line[0], ortho_line[1],'.')
 		distributions.append(get_distrubution(ROI, ortho_line, clf))
-		print distributions[len(distributions)-1]
+		#print distributions[len(distributions)-1]
 		i+=x_step
 	plt.show()
 	pdb.set_trace()

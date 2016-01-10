@@ -51,7 +51,7 @@ def main():
     plt.clf()
     plt.subplot(311)
     plt.imshow(img3, cmap = 'gray')
-    pdb.set_trace()
+    #pdb.set_trace()
     lowerBoundX, upperBoundX, lowerBoundY, upperBoundY = findBoxAroundNthPercentile(matchedKeypointsX, matchedKeypointsY, 0.5, blurAmt*15)
     plt.subplot(312)
     ROI = img[lowerBoundY:upperBoundY, lowerBoundX:upperBoundX]
