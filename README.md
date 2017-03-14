@@ -12,3 +12,10 @@ gets filenames from script itself
 Select Source -s <test case> <template>
 
 otherwise, terminal prompt
+
+## Vision
+
+The eventual goal is to able to take a picture of an arbitrary   
+PCB and get a list of identifiable parts and their   
+locations on the board. Should also work for individual components.  
+The goal is to make it a generic EE component identifier. 
